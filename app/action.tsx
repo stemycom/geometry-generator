@@ -12,6 +12,7 @@ import {
   runOpenAICompletion,
 } from "@/lib/utils";
 import { z } from "zod";
+import { Triangle } from "@/components/triangle";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -196,50 +197,8 @@ You and the user can create math geometry for teaching.`,
     }
   });
 
-  type Point = { x: number; y: number };
-
   completion.onFunctionCall("draw_triangle", async ({ points, unknowns }) => {
-    const pointsArray = points
-      .split(" ")
-      .map((point) => point.split(",").map(parseFloat));
-
-    const midpoint = (point1: Point, point2: Point) => ({
-      x: (point1.x + point2.x) / 2,
-      y: (point1.y + point2.y) / 2,
-    });
-
-    const midPoints = [
-      midpoint(
-        { x: pointsArray[0][0], y: pointsArray[0][1] },
-        { x: pointsArray[1][0], y: pointsArray[1][1] }
-      ),
-      midpoint(
-        { x: pointsArray[1][0], y: pointsArray[1][1] },
-        { x: pointsArray[2][0], y: pointsArray[2][1] }
-      ),
-      midpoint(
-        { x: pointsArray[2][0], y: pointsArray[2][1] },
-        { x: pointsArray[0][0], y: pointsArray[0][1] }
-      ),
-    ];
-
-    reply.done(
-      <svg viewBox="0 0 300 200" width="300" height="200">
-        <polygon
-          points={points}
-          className="stroke stroke-2 stroke-slate-500 fill-none"
-        />
-        {midPoints.map((point, index) => (
-          <circle
-            key={index}
-            cx={point.x}
-            cy={point.y}
-            r="2"
-            className="fill-slate-500"
-          />
-        ))}
-      </svg>
-    );
+    reply.done(<Triangle points={points} />);
 
     aiState.done([
       ...aiState.get(),
