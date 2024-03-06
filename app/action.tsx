@@ -3,16 +3,7 @@ import "server-only";
 import { createAI, createStreamableUI, getMutableAIState } from "ai/rsc";
 import OpenAI from "openai";
 
-import {
-  spinner,
-  BotCard,
-  BotMessage,
-  SystemMessage,
-  Stock,
-  Purchase,
-  Stocks,
-  Events,
-} from "@/components/llm-stocks";
+import { spinner, BotMessage, SystemMessage } from "@/components/llm-stocks";
 
 import {
   runAsyncFnWithoutBlocking,
@@ -21,9 +12,6 @@ import {
   runOpenAICompletion,
 } from "@/lib/utils";
 import { z } from "zod";
-import { StockSkeleton } from "@/components/llm-stocks/stock-skeleton";
-import { EventsSkeleton } from "@/components/llm-stocks/events-skeleton";
-import { StocksSkeleton } from "@/components/llm-stocks/stocks-skeleton";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -113,26 +101,14 @@ async function submitUserMessage(content: string) {
   );
 
   const completion = runOpenAICompletion(openai, {
-    model: "gpt-3.5-turbo",
+    model: "gpt-4-0125-preview",
     stream: true,
     messages: [
       {
         role: "system",
         content: `\
-You are a stock trading conversation bot and you can help users buy stocks, step by step.
-You and the user can discuss stock prices and the user can adjust the amount of stocks they want to buy, or place an order, in the UI.
-
-Messages inside [] means that it's a UI element or a user event. For example:
-- "[Price of AAPL = 100]" means that an interface of the stock price of AAPL is shown to the user.
-- "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
-
-If the user requests purchasing a stock, call \`show_stock_purchase_ui\` to show the purchase UI.
-If the user just wants the price, call \`show_stock_price\` to show the price.
-If you want to show trending stocks, call \`list_stocks\`.
-If you want to show events, call \`get_events\`.
-If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
-
-Besides that, you can also chat with users and do some calculations if needed.`,
+You are a math visualisation assistant specializing in geometric shapes.
+You and the user can create math geometry for teaching.`,
       },
       ...aiState.get().map((info: any) => ({
         role: info.role,
@@ -142,66 +118,72 @@ Besides that, you can also chat with users and do some calculations if needed.`,
     ],
     functions: [
       {
-        name: "show_stock_price",
+        name: "draw_triangle",
         description:
-          "Get the current stock price of a given stock or currency. Use this to show the price to the user.",
+          "Get the current paramaters for drawing a triangle. Use this to show the picture to the user.",
         parameters: z.object({
-          symbol: z
+          points: z
             .string()
             .describe(
-              "The name or symbol of the stock or currency. e.g. DOGE/AAPL/USD."
+              `The points to draw the rectangle. In SVG polygon path format e.g. "200,10 250,190 150,190"`
             ),
-          price: z.number().describe("The price of the stock."),
-          delta: z.number().describe("The change in price of the stock"),
-        }),
-      },
-      {
-        name: "show_stock_purchase_ui",
-        description:
-          "Show price and the UI to purchase a stock or currency. Use this if the user wants to purchase a stock or currency.",
-        parameters: z.object({
-          symbol: z
-            .string()
-            .describe(
-              "The name or symbol of the stock or currency. e.g. DOGE/AAPL/USD."
-            ),
-          price: z.number().describe("The price of the stock."),
-          numberOfShares: z
-            .number()
-            .describe(
-              "The **number of shares** for a stock or currency to purchase. Can be optional if the user did not specify it."
-            ),
-        }),
-      },
-      {
-        name: "list_stocks",
-        description: "List three imaginary stocks that are trending.",
-        parameters: z.object({
-          stocks: z.array(
-            z.object({
-              symbol: z.string().describe("The symbol of the stock"),
-              price: z.number().describe("The price of the stock"),
-              delta: z.number().describe("The change in price of the stock"),
+          unknowns: z
+            .object({
+              key: z.string().describe("The key of the unknown angle."),
+              index: z.number().describe("The index of the unknown angle."),
             })
-          ),
+            .describe(
+              "The unknown angles to solve for. eg. { key: 'A', index: 1 }"
+            ),
         }),
       },
-      {
-        name: "get_events",
-        description:
-          "List funny imaginary events between user highlighted dates that describe stock activity.",
-        parameters: z.object({
-          events: z.array(
-            z.object({
-              date: z
-                .string()
-                .describe("The date of the event, in ISO-8601 format"),
-              headline: z.string().describe("The headline of the event"),
-              description: z.string().describe("The description of the event"),
-            })
-          ),
-        }),
-      },
+      // {
+      //   name: "show_stock_purchase_ui",
+      //   description:
+      //     "Show price and the UI to purchase a stock or currency. Use this if the user wants to purchase a stock or currency.",
+      //   parameters: z.object({
+      //     symbol: z
+      //       .string()
+      //       .describe(
+      //         "The name or symbol of the stock or currency. e.g. DOGE/AAPL/USD."
+      //       ),
+      //     price: z.number().describe("The price of the stock."),
+      //     numberOfShares: z
+      //       .number()
+      //       .describe(
+      //         "The **number of shares** for a stock or currency to purchase. Can be optional if the user did not specify it."
+      //       ),
+      //   }),
+      // },
+      // {
+      //   name: "list_stocks",
+      //   description: "List three imaginary stocks that are trending.",
+      //   parameters: z.object({
+      //     stocks: z.array(
+      //       z.object({
+      //         symbol: z.string().describe("The symbol of the stock"),
+      //         price: z.number().describe("The price of the stock"),
+      //         delta: z.number().describe("The change in price of the stock"),
+      //       })
+      //     ),
+      //   }),
+      // },
+      // {
+      //   name: "get_events",
+      //   description:
+      //     "List funny imaginary events between user highlighted dates that describe stock activity.",
+      //   parameters: z.object({
+      //     events: z.array(
+      //       z.object({
+      //         date: z
+      //           .string()
+      //           .describe("The date of the event, in ISO-8601 format"),
+      //         headline: z.string().describe("The headline of the event"),
+      //         description: z.string().describe("The description of the event"),
+      //       })
+      //     ),
+      //   }),
+      // },
     ],
     temperature: 0,
   });
@@ -214,129 +196,185 @@ Besides that, you can also chat with users and do some calculations if needed.`,
     }
   });
 
-  completion.onFunctionCall("list_stocks", async ({ stocks }) => {
-    reply.update(
-      <BotCard>
-        <StocksSkeleton />
-      </BotCard>
-    );
+  type Point = { x: number; y: number };
 
-    await sleep(1000);
+  completion.onFunctionCall("draw_triangle", async ({ points, unknowns }) => {
+    const pointsArray = points
+      .split(" ")
+      .map((point) => point.split(",").map(parseFloat));
+
+    const midpoint = (point1: Point, point2: Point) => ({
+      x: (point1.x + point2.x) / 2,
+      y: (point1.y + point2.y) / 2,
+    });
+
+    const midPoints = [
+      midpoint(
+        { x: pointsArray[0][0], y: pointsArray[0][1] },
+        { x: pointsArray[1][0], y: pointsArray[1][1] }
+      ),
+      midpoint(
+        { x: pointsArray[1][0], y: pointsArray[1][1] },
+        { x: pointsArray[2][0], y: pointsArray[2][1] }
+      ),
+      midpoint(
+        { x: pointsArray[2][0], y: pointsArray[2][1] },
+        { x: pointsArray[0][0], y: pointsArray[0][1] }
+      ),
+    ];
 
     reply.done(
-      <BotCard>
-        <Stocks stocks={stocks} />
-      </BotCard>
+      <svg viewBox="0 0 300 200" width="300" height="200">
+        <polygon
+          points={points}
+          className="stroke stroke-2 stroke-slate-500 fill-none"
+        />
+        {midPoints.map((point, index) => (
+          <circle
+            key={index}
+            cx={point.x}
+            cy={point.y}
+            r="2"
+            className="fill-slate-500"
+          />
+        ))}
+      </svg>
     );
 
     aiState.done([
       ...aiState.get(),
       {
         role: "function",
-        name: "list_stocks",
-        content: JSON.stringify(stocks),
+        name: "draw_triangle",
+        content: JSON.stringify({ points }),
       },
     ]);
   });
 
-  completion.onFunctionCall("get_events", async ({ events }) => {
-    reply.update(
-      <BotCard>
-        <EventsSkeleton />
-      </BotCard>
-    );
+  // completion.onFunctionCall("list_stocks", async ({ stocks }) => {
+  //   console.log({ stocks });
+  //   reply.update(
+  //     <BotCard>
+  //       <StocksSkeleton />
+  //     </BotCard>
+  //   );
 
-    await sleep(1000);
+  //   await sleep(1000);
 
-    reply.done(
-      <BotCard>
-        <Events events={events} />
-      </BotCard>
-    );
+  //   reply.done(
+  //     <BotCard>
+  //       <Stocks stocks={stocks} />
+  //     </BotCard>
+  //   );
 
-    aiState.done([
-      ...aiState.get(),
-      {
-        role: "function",
-        name: "list_stocks",
-        content: JSON.stringify(events),
-      },
-    ]);
-  });
+  //   aiState.done([
+  //     ...aiState.get(),
+  //     {
+  //       role: "function",
+  //       name: "list_stocks",
+  //       content: JSON.stringify(stocks),
+  //     },
+  //   ]);
+  // });
 
-  completion.onFunctionCall(
-    "show_stock_price",
-    async ({ symbol, price, delta }) => {
-      reply.update(
-        <BotCard>
-          <StockSkeleton />
-        </BotCard>
-      );
+  // completion.onFunctionCall("get_events", async ({ events }) => {
+  //   reply.update(
+  //     <BotCard>
+  //       <EventsSkeleton />
+  //     </BotCard>
+  //   );
 
-      await sleep(1000);
+  //   await sleep(1000);
 
-      reply.done(
-        <BotCard>
-          <Stock name={symbol} price={price} delta={delta} />
-        </BotCard>
-      );
+  //   reply.done(
+  //     <BotCard>
+  //       <Events events={events} />
+  //     </BotCard>
+  //   );
 
-      aiState.done([
-        ...aiState.get(),
-        {
-          role: "function",
-          name: "show_stock_price",
-          content: `[Price of ${symbol} = ${price}]`,
-        },
-      ]);
-    }
-  );
+  //   aiState.done([
+  //     ...aiState.get(),
+  //     {
+  //       role: "function",
+  //       name: "list_stocks",
+  //       content: JSON.stringify(events),
+  //     },
+  //   ]);
+  // });
 
-  completion.onFunctionCall(
-    "show_stock_purchase_ui",
-    ({ symbol, price, numberOfShares = 100 }) => {
-      if (numberOfShares <= 0 || numberOfShares > 1000) {
-        reply.done(<BotMessage>Invalid amount</BotMessage>);
-        aiState.done([
-          ...aiState.get(),
-          {
-            role: "function",
-            name: "show_stock_purchase_ui",
-            content: `[Invalid amount]`,
-          },
-        ]);
-        return;
-      }
+  // completion.onFunctionCall(
+  //   "show_stock_price",
+  //   async ({ symbol, price, delta }) => {
+  //     reply.update(
+  //       <BotCard>
+  //         <StockSkeleton />
+  //       </BotCard>
+  //     );
 
-      reply.done(
-        <>
-          <BotMessage>
-            Sure!{" "}
-            {typeof numberOfShares === "number"
-              ? `Click the button below to purchase ${numberOfShares} shares of $${symbol}:`
-              : `How many $${symbol} would you like to purchase?`}
-          </BotMessage>
-          <BotCard showAvatar={false}>
-            <Purchase
-              defaultAmount={numberOfShares}
-              name={symbol}
-              price={+price}
-            />
-          </BotCard>
-        </>
-      );
-      aiState.done([
-        ...aiState.get(),
-        {
-          role: "function",
-          name: "show_stock_purchase_ui",
-          content: `[UI for purchasing ${numberOfShares} shares of ${symbol}. Current price = ${price}, total cost = ${
-            numberOfShares * price
-          }]`,
-        },
-      ]);
-    }
-  );
+  //     await sleep(1000);
+
+  //     reply.done(
+  //       <BotCard>
+  //         <Stock name={symbol} price={price} delta={delta} />
+  //       </BotCard>
+  //     );
+
+  //     aiState.done([
+  //       ...aiState.get(),
+  //       {
+  //         role: "function",
+  //         name: "show_stock_price",
+  //         content: `[Price of ${symbol} = ${price}]`,
+  //       },
+  //     ]);
+  //   }
+  // );
+
+  // completion.onFunctionCall(
+  //   "show_stock_purchase_ui",
+  //   ({ symbol, price, numberOfShares = 100 }) => {
+  //     if (numberOfShares <= 0 || numberOfShares > 1000) {
+  //       reply.done(<BotMessage>Invalid amount</BotMessage>);
+  //       aiState.done([
+  //         ...aiState.get(),
+  //         {
+  //           role: "function",
+  //           name: "show_stock_purchase_ui",
+  //           content: `[Invalid amount]`,
+  //         },
+  //       ]);
+  //       return;
+  //     }
+
+  //     reply.done(
+  //       <>
+  //         <BotMessage>
+  //           Sure!{" "}
+  //           {typeof numberOfShares === "number"
+  //             ? `Click the button below to purchase ${numberOfShares} shares of $${symbol}:`
+  //             : `How many $${symbol} would you like to purchase?`}
+  //         </BotMessage>
+  //         <BotCard showAvatar={false}>
+  //           <Purchase
+  //             defaultAmount={numberOfShares}
+  //             name={symbol}
+  //             price={+price}
+  //           />
+  //         </BotCard>
+  //       </>
+  //     );
+  //     aiState.done([
+  //       ...aiState.get(),
+  //       {
+  //         role: "function",
+  //         name: "show_stock_purchase_ui",
+  //         content: `[UI for purchasing ${numberOfShares} shares of ${symbol}. Current price = ${price}, total cost = ${
+  //           numberOfShares * price
+  //         }]`,
+  //       },
+  //     ]);
+  //   }
+  // );
 
   return {
     id: Date.now(),
