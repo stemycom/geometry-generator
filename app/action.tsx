@@ -122,7 +122,9 @@ You and the user can create math geometry for teaching math.`,
       {
         name: "draw_shape",
         description:
-          "Get the current paramaters for drawing a basic 2D geometric shape. Use this to show the picture to the user. Keep in mind the bounds, so you dont draw outside width: 300 height:200",
+          `\
+Get the current paramaters for drawing a basic 2D geometric shape. Use this to show the picture to the user.
+Keep in mind the bounds, so you dont draw outside width of 300 and height of 200`,
         parameters: z.object({
           points: z
             .string()
@@ -157,7 +159,8 @@ You and the user can create math geometry for teaching math.`,
     }
   });
 
-  completion.onFunctionCall("draw_shape", async ({ points, marks }) => {
+  completion.onFunctionCall("draw_shape", async (props) => {
+    const { points, marks } = props;
     const markPositions = marks
       ?.split(" ")
       .map((point: string) => point.split(",").map(Number));
@@ -187,7 +190,7 @@ You and the user can create math geometry for teaching math.`,
       {
         role: "function",
         name: "draw_shape",
-        content: JSON.stringify({ points }),
+        content: JSON.stringify(props),
       },
     ]);
   });
