@@ -120,7 +120,7 @@ You and the user can create math geometry for teaching.`,
     ],
     functions: [
       {
-        name: "draw_geometry",
+        name: "draw_polygon",
         description:
           "Get the current paramaters for drawing a basic 2D geometric shape. Use this to show the picture to the user. Keep in mind the bounds, so you dont draw outside width: 300 height:200",
         parameters: z.object({
@@ -132,7 +132,7 @@ You and the user can create math geometry for teaching.`,
           marks: z
             .string()
             .describe(
-              `A collection of marks to indicate point or points on the shape if asked. eg. Three marks: "200,10 250,190 150,190"`
+              `A collection of marks to indicate point or points on the shape if asked. eg. "200,10 150,190"`
             )
             .optional()
           // unknowns: z
@@ -157,7 +157,7 @@ You and the user can create math geometry for teaching.`,
     }
   });
 
-  completion.onFunctionCall("draw_geometry", async ({ points, marks }) => {
+  completion.onFunctionCall("draw_polygon", async ({ points, marks }) => {
     const markPositions = marks
       ?.split(" ")
       .map((point: string) => point.split(",").map(Number));
@@ -186,7 +186,7 @@ You and the user can create math geometry for teaching.`,
       ...aiState.get(),
       {
         role: "function",
-        name: "draw_geometry",
+        name: "draw_polygon",
         content: JSON.stringify({ points }),
       },
     ]);
