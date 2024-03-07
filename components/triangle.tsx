@@ -5,57 +5,57 @@ export function Triangle({
 }: {
   points?: string;
 }) {
-  const pointsArray = points
-    .split(" ")
-    .map((point) => point.split(",").map(parseFloat));
+  //   const pointsArray = points
+  //     .split(" ")
+  //     .map((point) => point.split(",").map(parseFloat));
 
-  const midPoints = [
-    getCentroid(
-      { x: pointsArray[0][0], y: pointsArray[0][1] },
-      { x: pointsArray[1][0], y: pointsArray[1][1] }
-    ),
-    getCentroid(
-      { x: pointsArray[1][0], y: pointsArray[1][1] },
-      { x: pointsArray[2][0], y: pointsArray[2][1] }
-    ),
-    getCentroid(
-      { x: pointsArray[2][0], y: pointsArray[2][1] },
-      { x: pointsArray[0][0], y: pointsArray[0][1] }
-    ),
-  ];
+  //   const midPoints = [
+  //     getCentroid(
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] }
+  //     ),
+  //     getCentroid(
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] }
+  //     ),
+  //     getCentroid(
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] }
+  //     ),
+  //   ];
 
-  const midPointAngles = [
-    getLineAngle(
-      { x: pointsArray[0][0], y: pointsArray[0][1] },
-      { x: pointsArray[1][0], y: pointsArray[1][1] }
-    ),
-    getLineAngle(
-      { x: pointsArray[1][0], y: pointsArray[1][1] },
-      { x: pointsArray[2][0], y: pointsArray[2][1] }
-    ),
-    getLineAngle(
-      { x: pointsArray[2][0], y: pointsArray[2][1] },
-      { x: pointsArray[0][0], y: pointsArray[0][1] }
-    ),
-  ];
+  //   const midPointAngles = [
+  //     getLineAngle(
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] }
+  //     ),
+  //     getLineAngle(
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] }
+  //     ),
+  //     getLineAngle(
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] }
+  //     ),
+  //   ];
 
-  const angles = [
-    calculateCornerAngle(
-      { x: pointsArray[1][0], y: pointsArray[1][1] },
-      { x: pointsArray[2][0], y: pointsArray[2][1] },
-      { x: pointsArray[0][0], y: pointsArray[0][1] }
-    ),
-    calculateCornerAngle(
-      { x: pointsArray[0][0], y: pointsArray[0][1] },
-      { x: pointsArray[1][0], y: pointsArray[1][1] },
-      { x: pointsArray[2][0], y: pointsArray[2][1] }
-    ),
-    calculateCornerAngle(
-      { x: pointsArray[2][0], y: pointsArray[2][1] },
-      { x: pointsArray[0][0], y: pointsArray[0][1] },
-      { x: pointsArray[1][0], y: pointsArray[1][1] }
-    ),
-  ];
+  //   const angles = [
+  //     calculateCornerAngle(
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] }
+  //     ),
+  //     calculateCornerAngle(
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] }
+  //     ),
+  //     calculateCornerAngle(
+  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
+  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
+  //       { x: pointsArray[1][0], y: pointsArray[1][1] }
+  //     ),
+  //   ];
 
   return (
     <svg viewBox="0 0 300 200" width="300" height="200">
@@ -63,7 +63,7 @@ export function Triangle({
         points={points}
         className="stroke stroke-2 stroke-slate-500 fill-none"
       />
-      {pointsArray.map(([x, y], i) => {
+      {/* {pointsArray.map(([x, y], i) => {
         const angle = Math.round(angles[i] * 10) / 10;
 
         return (
@@ -108,7 +108,7 @@ export function Triangle({
             </text>
           </>
         );
-      })}
+      })} */}
     </svg>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/utils";
 import { z } from "zod";
 import { Triangle } from "@/components/triangle";
+import { Shape } from "@/components/shape";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -119,74 +120,33 @@ You and the user can create math geometry for teaching.`,
     ],
     functions: [
       {
-        name: "draw_triangle",
+        name: "draw_geometry",
         description:
-          "Get the current paramaters for drawing a triangle. Use this to show the picture to the user.",
+          "Get the current paramaters for drawing a basic 2D geometric shape. Use this to show the picture to the user. Keep in mind the bounds, so you dont draw outside width: 300 height:200",
         parameters: z.object({
           points: z
             .string()
             .describe(
-              `The points to draw the rectangle. In SVG polygon path format e.g. "200,10 250,190 150,190"`
+              `The points to draw the shape. In SVG polygon path format e.g. "200,10 250,190 150,190"`
             ),
-          unknowns: z
-            .object({
-              key: z.string().describe("The key of the unknown angle."),
-              index: z.number().describe("The index of the unknown angle."),
-            })
+          marks: z
+            .string()
             .describe(
-              "The unknown angles to solve for. eg. { key: 'A', index: 1 }"
-            ),
+              `A collection of marks to indicate point or points on the shape if asked. eg. Three marks: "200,10 250,190 150,190"`
+            )
+            .optional()
+          // unknowns: z
+          //   .object({
+          //     key: z.string().describe("The key of the unknown angle."),
+          //     index: z.number().describe("The index of the unknown angle."),
+          //   })
+          //   .describe(
+          //     "The unknown angles to solve for. eg. { key: 'A', index: 1 }"
+          //   ),
         }),
       },
-      // {
-      //   name: "show_stock_purchase_ui",
-      //   description:
-      //     "Show price and the UI to purchase a stock or currency. Use this if the user wants to purchase a stock or currency.",
-      //   parameters: z.object({
-      //     symbol: z
-      //       .string()
-      //       .describe(
-      //         "The name or symbol of the stock or currency. e.g. DOGE/AAPL/USD."
-      //       ),
-      //     price: z.number().describe("The price of the stock."),
-      //     numberOfShares: z
-      //       .number()
-      //       .describe(
-      //         "The **number of shares** for a stock or currency to purchase. Can be optional if the user did not specify it."
-      //       ),
-      //   }),
-      // },
-      // {
-      //   name: "list_stocks",
-      //   description: "List three imaginary stocks that are trending.",
-      //   parameters: z.object({
-      //     stocks: z.array(
-      //       z.object({
-      //         symbol: z.string().describe("The symbol of the stock"),
-      //         price: z.number().describe("The price of the stock"),
-      //         delta: z.number().describe("The change in price of the stock"),
-      //       })
-      //     ),
-      //   }),
-      // },
-      // {
-      //   name: "get_events",
-      //   description:
-      //     "List funny imaginary events between user highlighted dates that describe stock activity.",
-      //   parameters: z.object({
-      //     events: z.array(
-      //       z.object({
-      //         date: z
-      //           .string()
-      //           .describe("The date of the event, in ISO-8601 format"),
-      //         headline: z.string().describe("The headline of the event"),
-      //         description: z.string().describe("The description of the event"),
-      //       })
-      //     ),
-      //   }),
-      // },
     ],
-    temperature: 0,
+    temperature: 0.1,
   });
 
   completion.onTextContent((content: string, isFinal: boolean) => {
@@ -197,143 +157,40 @@ You and the user can create math geometry for teaching.`,
     }
   });
 
-  completion.onFunctionCall("draw_triangle", async ({ points, unknowns }) => {
-    reply.done(<Triangle points={points} />);
+  completion.onFunctionCall("draw_geometry", async ({ points, marks }) => {
+    const markPositions = marks
+      ?.split(" ")
+      .map((point: string) => point.split(",").map(Number));
+
+    console.log({ points, markPositions });
+
+    reply.done(
+      <svg viewBox="5 5 305 205" width="300" height="200">
+        <polygon
+          points={points}
+          className="stroke stroke-2 stroke-slate-500 fill-none"
+        />
+        {markPositions?.map((point, index) => (
+          <circle
+            key={index}
+            cx={point[0]}
+            cy={point[1]}
+            r={6}
+            className="fill-none stroke-red-500 stroke-1"
+          />
+        ))}
+      </svg>
+    );
 
     aiState.done([
       ...aiState.get(),
       {
         role: "function",
-        name: "draw_triangle",
+        name: "draw_geometry",
         content: JSON.stringify({ points }),
       },
     ]);
   });
-
-  // completion.onFunctionCall("list_stocks", async ({ stocks }) => {
-  //   console.log({ stocks });
-  //   reply.update(
-  //     <BotCard>
-  //       <StocksSkeleton />
-  //     </BotCard>
-  //   );
-
-  //   await sleep(1000);
-
-  //   reply.done(
-  //     <BotCard>
-  //       <Stocks stocks={stocks} />
-  //     </BotCard>
-  //   );
-
-  //   aiState.done([
-  //     ...aiState.get(),
-  //     {
-  //       role: "function",
-  //       name: "list_stocks",
-  //       content: JSON.stringify(stocks),
-  //     },
-  //   ]);
-  // });
-
-  // completion.onFunctionCall("get_events", async ({ events }) => {
-  //   reply.update(
-  //     <BotCard>
-  //       <EventsSkeleton />
-  //     </BotCard>
-  //   );
-
-  //   await sleep(1000);
-
-  //   reply.done(
-  //     <BotCard>
-  //       <Events events={events} />
-  //     </BotCard>
-  //   );
-
-  //   aiState.done([
-  //     ...aiState.get(),
-  //     {
-  //       role: "function",
-  //       name: "list_stocks",
-  //       content: JSON.stringify(events),
-  //     },
-  //   ]);
-  // });
-
-  // completion.onFunctionCall(
-  //   "show_stock_price",
-  //   async ({ symbol, price, delta }) => {
-  //     reply.update(
-  //       <BotCard>
-  //         <StockSkeleton />
-  //       </BotCard>
-  //     );
-
-  //     await sleep(1000);
-
-  //     reply.done(
-  //       <BotCard>
-  //         <Stock name={symbol} price={price} delta={delta} />
-  //       </BotCard>
-  //     );
-
-  //     aiState.done([
-  //       ...aiState.get(),
-  //       {
-  //         role: "function",
-  //         name: "show_stock_price",
-  //         content: `[Price of ${symbol} = ${price}]`,
-  //       },
-  //     ]);
-  //   }
-  // );
-
-  // completion.onFunctionCall(
-  //   "show_stock_purchase_ui",
-  //   ({ symbol, price, numberOfShares = 100 }) => {
-  //     if (numberOfShares <= 0 || numberOfShares > 1000) {
-  //       reply.done(<BotMessage>Invalid amount</BotMessage>);
-  //       aiState.done([
-  //         ...aiState.get(),
-  //         {
-  //           role: "function",
-  //           name: "show_stock_purchase_ui",
-  //           content: `[Invalid amount]`,
-  //         },
-  //       ]);
-  //       return;
-  //     }
-
-  //     reply.done(
-  //       <>
-  //         <BotMessage>
-  //           Sure!{" "}
-  //           {typeof numberOfShares === "number"
-  //             ? `Click the button below to purchase ${numberOfShares} shares of $${symbol}:`
-  //             : `How many $${symbol} would you like to purchase?`}
-  //         </BotMessage>
-  //         <BotCard showAvatar={false}>
-  //           <Purchase
-  //             defaultAmount={numberOfShares}
-  //             name={symbol}
-  //             price={+price}
-  //           />
-  //         </BotCard>
-  //       </>
-  //     );
-  //     aiState.done([
-  //       ...aiState.get(),
-  //       {
-  //         role: "function",
-  //         name: "show_stock_purchase_ui",
-  //         content: `[UI for purchasing ${numberOfShares} shares of ${symbol}. Current price = ${price}, total cost = ${
-  //           numberOfShares * price
-  //         }]`,
-  //       },
-  //     ]);
-  //   }
-  // );
 
   return {
     id: Date.now(),

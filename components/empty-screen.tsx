@@ -3,30 +3,12 @@ import { IconArrowRight } from "@/components/ui/icons";
 import { Triangle } from "./triangle";
 
 const exampleMessages = [
-  {
-    heading: "Draw me a right angled triangle.",
-    message: "Draw me a right angled triangle.",
-  },
-  {
-    heading: "Draw me a triangle with one side 5cm.",
-    message: "Draw me a triangle with one side 5cm.",
-  },
-  {
-    heading: "Draw me a triangle with angles 30, 60, 90 degrees.",
-    message: "Draw me a triangle with angles 30, 60, 90 degrees.",
-  },
-  {
-    heading: "Draw me an equilateral triangle.",
-    message: "Draw me an equilateral triangle.",
-  },
-  {
-    heading: "Draw me an isosceles triangle.",
-    message: "Draw me an isosceles triangle.",
-  },
-  {
-    heading: "Draw me a scalene triangle.",
-    message: "Draw me a scalene triangle.",
-  },
+  "Draw me a triangle.",
+  "Draw me a square.",
+  "Draw me a trapazoid.",
+  "Draw me a rectangle.",
+  "Draw me a right angled triangle.",
+  "Draw me a right angled triangle. And mark the right angle.",
 ];
 
 export function EmptyScreen({
@@ -45,11 +27,11 @@ export function EmptyScreen({
               variant="link"
               className="h-auto p-0 text-base"
               onClick={async () => {
-                submitMessage(message.message);
+                submitMessage(message);
               }}
             >
               <IconArrowRight className="mr-2 text-muted-foreground" />
-              {message.heading}
+              {message}
             </Button>
           ))}
         </div>
