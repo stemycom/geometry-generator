@@ -39,11 +39,23 @@ export function Triangle({
     ),
   ];
 
-  const center = getCentroid(
-    { x: pointsArray[0][0], y: pointsArray[0][1] },
-    { x: pointsArray[1][0], y: pointsArray[1][1] },
-    { x: pointsArray[2][0], y: pointsArray[2][1] }
-  );
+  const angles = [
+    calculateCornerAngle(
+      { x: pointsArray[1][0], y: pointsArray[1][1] },
+      { x: pointsArray[2][0], y: pointsArray[2][1] },
+      { x: pointsArray[0][0], y: pointsArray[0][1] }
+    ),
+    calculateCornerAngle(
+      { x: pointsArray[0][0], y: pointsArray[0][1] },
+      { x: pointsArray[1][0], y: pointsArray[1][1] },
+      { x: pointsArray[2][0], y: pointsArray[2][1] }
+    ),
+    calculateCornerAngle(
+      { x: pointsArray[2][0], y: pointsArray[2][1] },
+      { x: pointsArray[0][0], y: pointsArray[0][1] },
+      { x: pointsArray[1][0], y: pointsArray[1][1] }
+    ),
+  ];
 
   return (
     <svg viewBox="0 0 300 200" width="300" height="200">
@@ -51,6 +63,24 @@ export function Triangle({
         points={points}
         className="stroke stroke-2 stroke-slate-500 fill-none"
       />
+      {pointsArray.map(([x, y], i) => {
+        const angle = Math.round(angles[i] * 10) / 10;
+
+        return (
+          <>
+            <circle key={i} cx={x} cy={y} r="2" className="fill-slate-500" />
+            <text
+              x={x}
+              y={y}
+              className="text-xs fill-slate-500"
+              dominantBaseline="middle"
+              textAnchor="middle"
+            >
+              {angle}
+            </text>
+          </>
+        );
+      })}
       {midPoints.map((point, i) => {
         const textPos = findPointAtAngleAndDistance(
           point,
@@ -81,6 +111,27 @@ export function Triangle({
       })}
     </svg>
   );
+}
+
+function calculateCornerAngle(p1: Point, p2: Point, p3: Point): number {
+  // Create vectors from point p2 to p1 and p3
+  let vectorP2P1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+  let vectorP2P3 = { x: p3.x - p2.x, y: p3.y - p2.y };
+
+  // Compute the dot product of the two vectors
+  let dotProduct = vectorP2P1.x * vectorP2P3.x + vectorP2P1.y * vectorP2P3.y;
+
+  // Compute the cross product of the two vectors
+  let crossProduct = vectorP2P1.y * vectorP2P3.x - vectorP2P1.x * vectorP2P3.y;
+
+  // Calculate the angle and convert it to degrees
+  let angle = Math.atan2(crossProduct, dotProduct) * (180 / Math.PI);
+
+  // If angle is negative, add 360 to get the positive equivalent
+  if (angle < 0) angle += 360;
+  if (angle > 180) angle = 360 - angle;
+
+  return angle;
 }
 
 function getLineAngle(p1: Point, p2: Point): number {

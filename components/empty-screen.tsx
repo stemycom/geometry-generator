@@ -7,6 +7,26 @@ const exampleMessages = [
     heading: "Draw me a right angled triangle.",
     message: "Draw me a right angled triangle.",
   },
+  {
+    heading: "Draw me a triangle with one side 5cm.",
+    message: "Draw me a triangle with one side 5cm.",
+  },
+  {
+    heading: "Draw me a triangle with angles 30, 60, 90 degrees.",
+    message: "Draw me a triangle with angles 30, 60, 90 degrees.",
+  },
+  {
+    heading: "Draw me an equilateral triangle.",
+    message: "Draw me an equilateral triangle.",
+  },
+  {
+    heading: "Draw me an isosceles triangle.",
+    message: "Draw me an isosceles triangle.",
+  },
+  {
+    heading: "Draw me a scalene triangle.",
+    message: "Draw me a scalene triangle.",
+  },
 ];
 
 export function EmptyScreen({
