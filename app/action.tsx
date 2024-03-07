@@ -110,7 +110,7 @@ async function submitUserMessage(content: string) {
         role: "system",
         content: `\
 You are a math visualisation assistant specializing in geometric shapes.
-You and the user can create math geometry for teaching.`,
+You and the user can create math geometry for teaching math.`,
       },
       ...aiState.get().map((info: any) => ({
         role: info.role,
@@ -120,14 +120,14 @@ You and the user can create math geometry for teaching.`,
     ],
     functions: [
       {
-        name: "draw_polygon",
+        name: "draw_shape",
         description:
           "Get the current paramaters for drawing a basic 2D geometric shape. Use this to show the picture to the user. Keep in mind the bounds, so you dont draw outside width: 300 height:200",
         parameters: z.object({
           points: z
             .string()
             .describe(
-              `The points to draw the shape. In SVG polygon path format e.g. "200,10 250,190 150,190"`
+              `The points to draw the shape. In SVG shape path format e.g. "M125 86.5L86 43.5L41 97L125 86.5Z"`
             ),
           marks: z
             .string()
@@ -157,7 +157,7 @@ You and the user can create math geometry for teaching.`,
     }
   });
 
-  completion.onFunctionCall("draw_polygon", async ({ points, marks }) => {
+  completion.onFunctionCall("draw_shape", async ({ points, marks }) => {
     const markPositions = marks
       ?.split(" ")
       .map((point: string) => point.split(",").map(Number));
@@ -166,8 +166,8 @@ You and the user can create math geometry for teaching.`,
 
     reply.done(
       <svg viewBox="5 5 305 205" width="300" height="200">
-        <polygon
-          points={points}
+        <path
+          d={points}
           className="stroke stroke-2 stroke-slate-500 fill-none"
         />
         {markPositions?.map((point, index) => (
@@ -186,7 +186,7 @@ You and the user can create math geometry for teaching.`,
       ...aiState.get(),
       {
         role: "function",
-        name: "draw_polygon",
+        name: "draw_shape",
         content: JSON.stringify({ points }),
       },
     ]);

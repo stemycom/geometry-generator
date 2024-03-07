@@ -3,12 +3,12 @@ import { IconArrowRight } from "@/components/ui/icons";
 import { Triangle } from "./triangle";
 
 const exampleMessages = [
-  "Draw me a triangle.",
-  "Draw me a square.",
-  "Draw me a trapazoid.",
-  "Draw me a rectangle.",
-  "Draw me a right angled triangle.",
-  "Draw me a right angled triangle. And mark the right angle.",
+  "Draw a triangle.",
+  "Draw a square.",
+  "Draw a trapazoid.",
+  "Draw a rectangle.",
+  "Draw a right angled triangle.",
+  "Draw a right angled triangle. And mark the 90degree angle.",
 ];
 
 export function EmptyScreen({
