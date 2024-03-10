@@ -1,12 +1,14 @@
 type Vector2 = [number, number];
 
-export function Triangle(props: {
-  points?: string;
-  marks?: string;
+export function Triangle({
+  points
+}: {
+  points: string;
+  angles?: string;
 }) {
-  //   const pointsArray = points
-  //     .split(" ")
-  //     .map((point) => point.split(",").map(parseFloat));
+    const pointsArray = points
+      .split(" ")
+      .map((point) => point.split(",").map(parseFloat)) as Vector2[];
 
   //   const midPoints = [
   //     getCentroid(
@@ -38,32 +40,20 @@ export function Triangle(props: {
   //     ),
   //   ];
 
-  //   const angles = [
-  //     calculateCornerAngle(
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] }
-  //     ),
-  //     calculateCornerAngle(
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] }
-  //     ),
-  //     calculateCornerAngle(
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] }
-  //     ),
-  //   ];
-
   return (
     <svg viewBox="0 0 300 200" width="300" height="200">
       <polygon
-        points={props.points}
+        points={points}
         className="stroke stroke-2 stroke-slate-500 fill-none"
       />
-      {/* {pointsArray.map(([x, y], i) => {
-        const angle = Math.round(angles[i] * 10) / 10;
+      {pointsArray.map(([x, y], i) => {
+        const lastIndex = pointsArray.length - 1;
+        const rawAngle = calculateCornerAngle(
+          pointsArray[i === 0 ? lastIndex : i - 1],
+          pointsArray[i],
+          pointsArray[i === lastIndex ? 0 : i + 1],
+        )
+        const angle = Math.round(rawAngle) + "°";
 
         return (
           <>
@@ -80,6 +70,7 @@ export function Triangle(props: {
           </>
         );
       })}
+      {/* 
       {midPoints.map((point, i) => {
         const textPos = findPointAtAngleAndDistance(
           point,

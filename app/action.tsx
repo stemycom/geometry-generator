@@ -133,11 +133,12 @@ Keep in mind the bounds, so you dont draw outside width of 300 and height of 200
               `The points to draw the shape. In SVG shape points format e.g. "200,10 250,190 150,190"`
             ),
           angles: z
+            //.array(z.string().optional())
             .any()
             .describe(
               `\
-A collection of marks to indicate a corner on the shape if asked. Use an array of strings: eg. ['120°', '40°', '20°'], \
-, ['A', 'B', 'C'] to mark the points or ['X', 'Y', 'Z']`
+A collection of marks to indicate a corner on the shape if asked. Use an array of strings: eg. ['120°', '40°', '20°']
+Use undefined to skip an index. eg. [undefined, '90°'] to mark the points or ['X', undefined, 'Z']`
             )
             .optional()
         }),
@@ -156,12 +157,9 @@ A collection of marks to indicate a corner on the shape if asked. Use an array o
 
   completion.onFunctionCall("draw_shape", async (props) => {
     const { points } = props;
-    // const markPositions = marks
-    //   ?.split(" ")
-    //   .map((point: string) => point.split(",").map(Number));
 
     reply.done(
-      <div>
+      <div className="flex">
         <Triangle points={points} />
         <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
       </div>
