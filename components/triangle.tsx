@@ -8,9 +8,14 @@ export function Triangle({ points }: { points: string; angles?: string }) {
     .map((point) => point.split(",").map(parseFloat)) as Vector2[];
 
   return (
-    <svg viewBox="0 0 300 200" width="300" height="200">
+    <svg
+      className="text-green-400"
+      viewBox="0 0 300 200"
+      width="300"
+      height="200"
+    >
       <polygon
-        className="stroke stroke-2 fill-red-500/30 stroke-red-400"
+        className="stroke stroke-2 fill-red-400/20 stroke-red-400"
         points={points}
       />
       <AngleArcs points={pointsArray} />
@@ -27,34 +32,62 @@ function AngleArcs({ points }: { points: Vector2[] }) {
       points[i === lastIndex ? 0 : i + 1]
     );
 
+    const outerRadius = d3.scaleLinear().domain([0, 180]).range([60, 10])(
+      rawAngle
+    );
+
+    const { startAngle, endAngle } = getAngles(
+      points[i === 0 ? lastIndex : i - 1],
+      points[i],
+      points[i === lastIndex ? 0 : i + 1]
+    );
+
     const arcPath = d3.arc()({
-      innerRadius: 43,
-      outerRadius: 45,
-      ...getAngles(
-        points[i === 0 ? lastIndex : i - 1],
-        points[i],
-        points[i === lastIndex ? 0 : i + 1]
-      ),
+      innerRadius: outerRadius - 2,
+      outerRadius,
+      startAngle,
+      endAngle,
     })!;
+
+    const labelPos = d3.scalePow().domain([0, 180]).range([40, 2])(rawAngle);
+
+    const medianAngle = (startAngle + endAngle) / 2;
+    const [labelX, labelY] = movePoint(
+      points[i],
+      medianAngle - Math.PI / 2,
+      labelPos
+    );
 
     const angleLabel = Math.round(rawAngle) + "°";
     return (
       <g key={i}>
-        <text
-          x={x}
-          y={y}
-          className="text-xs fill-white"
-          dominantBaseline="middle"
-          textAnchor="start"
-        >
-          {`${i}: ${angleLabel}`}
-        </text>
+        {rawAngle === 90 ? (
+          <circle cx={labelX} cy={labelY} r={3} className="fill-red-400" />
+        ) : (
+          <text
+            x={labelX}
+            y={labelY}
+            className="text-xs fill-white"
+            dominantBaseline="middle"
+            textAnchor="middle"
+          >
+            {angleLabel}
+          </text>
+        )}
         <g transform={`translate(${x},${y})`}>
           <path d={arcPath} className="fill-red-400" />
         </g>
       </g>
     );
   });
+}
+
+function movePoint(point: Vector2, angle: number, distance: number): Vector2 {
+  // Calculate new position
+  let x = point[0] + distance * Math.cos(angle);
+  let y = point[1] + distance * Math.sin(angle);
+
+  return [x, y] as Vector2;
 }
 
 function getAngles(
