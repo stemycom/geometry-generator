@@ -1,9 +1,8 @@
-type Point = { x: number; y: number };
+type Vector2 = [number, number];
 
-export function Triangle({
-  points = "100,50 100,150 200,150",
-}: {
+export function Triangle(props: {
   points?: string;
+  marks?: string;
 }) {
   //   const pointsArray = points
   //     .split(" ")
@@ -60,7 +59,7 @@ export function Triangle({
   return (
     <svg viewBox="0 0 300 200" width="300" height="200">
       <polygon
-        points={points}
+        points={props.points}
         className="stroke stroke-2 stroke-slate-500 fill-none"
       />
       {/* {pointsArray.map(([x, y], i) => {
@@ -113,16 +112,16 @@ export function Triangle({
   );
 }
 
-function calculateCornerAngle(p1: Point, p2: Point, p3: Point): number {
+function calculateCornerAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
   // Create vectors from point p2 to p1 and p3
-  let vectorP2P1 = { x: p1.x - p2.x, y: p1.y - p2.y };
-  let vectorP2P3 = { x: p3.x - p2.x, y: p3.y - p2.y };
+  let vectorP2P1 = [p1[0] - p2[0], p1[1] - p2[1]];
+  let vectorP2P3 = [p3[0] - p2[0], p3[1] - p2[1]];
 
   // Compute the dot product of the two vectors
-  let dotProduct = vectorP2P1.x * vectorP2P3.x + vectorP2P1.y * vectorP2P3.y;
+  let dotProduct = vectorP2P1[0] * vectorP2P3[0] + vectorP2P1[1] * vectorP2P3[1];
 
   // Compute the cross product of the two vectors
-  let crossProduct = vectorP2P1.y * vectorP2P3.x - vectorP2P1.x * vectorP2P3.y;
+  let crossProduct = vectorP2P1[1] * vectorP2P3[0] - vectorP2P1[0] * vectorP2P3[1];
 
   // Calculate the angle and convert it to degrees
   let angle = Math.atan2(crossProduct, dotProduct) * (180 / Math.PI);
@@ -134,32 +133,32 @@ function calculateCornerAngle(p1: Point, p2: Point, p3: Point): number {
   return angle;
 }
 
-function getLineAngle(p1: Point, p2: Point): number {
-  return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+function getLineAngle(p1: Vector2, p2: Vector2): number {
+  return Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
 }
 
 function findPointAtAngleAndDistance(
-  centroid: Point,
+  centroid: Vector2,
   angle: number,
   distance: number
-): Point {
-  return {
-    x: centroid.x + distance * Math.cos(angle),
-    y: centroid.y + distance * Math.sin(angle),
-  };
+): Vector2 {
+  return [
+    centroid[0] + distance * Math.cos(angle),
+    centroid[1] + distance * Math.sin(angle),
+  ];
 }
 
-function getCentroid(...arr: Point[]): Point {
+function getCentroid(...arr: Vector2[]): Vector2 {
   let sumX = 0;
   let sumY = 0;
 
   for (let i = 0; i < arr.length; i++) {
-    sumX += arr[i].x;
-    sumY += arr[i].y;
+    sumX += arr[i][0];
+    sumY += arr[i][1];
   }
 
   let centroidX = sumX / arr.length;
   let centroidY = sumY / arr.length;
 
-  return { x: centroidX, y: centroidY };
+  return [centroidX, centroidY];
 }

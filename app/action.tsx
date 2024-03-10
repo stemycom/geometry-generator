@@ -123,28 +123,23 @@ You and the user can create math geometry for teaching math.`,
         name: "draw_shape",
         description:
           `\
-Get the current paramaters for drawing a basic 2D geometric shape. Use this to show the picture to the user.
-Keep in mind the bounds, so you dont draw outside width of 300 and height of 200`,
+Get the current paramaters for drawing a 2D geometric shape.
+Make sure the shape is always in correlation with the angles if it's provided. eg. 90° should always produce a right angle.
+Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave some padding.`,
         parameters: z.object({
           points: z
             .string()
             .describe(
-              `The points to draw the shape. In SVG shape path format e.g. "M125 86.5L86 43.5L41 97L125 86.5Z"`
+              `The points to draw the shape. In SVG shape points format e.g. "200,10 250,190 150,190"`
             ),
-          marks: z
-            .string()
+          angles: z
+            .any()
             .describe(
-              `A collection of marks to indicate point or points on the shape if asked. eg. "200,10 150,190"`
+              `\
+A collection of marks to indicate a corner on the shape if asked. Use an array of strings: eg. ['120°', '40°', '20°'], \
+, ['A', 'B', 'C'] to mark the points or ['X', 'Y', 'Z']`
             )
             .optional()
-          // unknowns: z
-          //   .object({
-          //     key: z.string().describe("The key of the unknown angle."),
-          //     index: z.number().describe("The index of the unknown angle."),
-          //   })
-          //   .describe(
-          //     "The unknown angles to solve for. eg. { key: 'A', index: 1 }"
-          //   ),
         }),
       },
     ],
@@ -160,29 +155,16 @@ Keep in mind the bounds, so you dont draw outside width of 300 and height of 200
   });
 
   completion.onFunctionCall("draw_shape", async (props) => {
-    const { points, marks } = props;
-    const markPositions = marks
-      ?.split(" ")
-      .map((point: string) => point.split(",").map(Number));
-
-    console.log({ points, markPositions });
+    const { points } = props;
+    // const markPositions = marks
+    //   ?.split(" ")
+    //   .map((point: string) => point.split(",").map(Number));
 
     reply.done(
-      <svg viewBox="5 5 305 205" width="300" height="200">
-        <path
-          d={points}
-          className="stroke stroke-2 stroke-slate-500 fill-none"
-        />
-        {markPositions?.map((point, index) => (
-          <circle
-            key={index}
-            cx={point[0]}
-            cy={point[1]}
-            r={6}
-            className="fill-none stroke-red-500 stroke-1"
-          />
-        ))}
-      </svg>
+      <div>
+        <Triangle points={points} />
+        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
+      </div>
     );
 
     aiState.done([
