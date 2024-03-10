@@ -2,7 +2,13 @@ import * as d3 from "d3";
 
 type Vector2 = [number, number];
 
-export function Triangle({ points }: { points: string; angles?: string }) {
+export function Triangle({
+  points,
+  angles,
+}: {
+  points: string;
+  angles?: (string | null | undefined)[];
+}) {
   const pointsArray = points
     .split(" ")
     .map((point) => point.split(",").map(parseFloat)) as Vector2[];
@@ -15,15 +21,21 @@ export function Triangle({ points }: { points: string; angles?: string }) {
       height="200"
     >
       <polygon
-        className="stroke stroke-2 fill-red-400/20 stroke-red-400"
+        className="stroke fill-red-400/20 stroke-red-400"
         points={points}
       />
-      <AngleArcs points={pointsArray} />
+      <AngleArcs points={pointsArray} angles={angles} />
     </svg>
   );
 }
 
-function AngleArcs({ points }: { points: Vector2[] }) {
+function AngleArcs({
+  points,
+  angles,
+}: {
+  points: Vector2[];
+  angles?: (string | null | undefined)[];
+}) {
   return points.map(([x, y], i) => {
     const lastIndex = points.length - 1;
     const rawAngle = calculateCornerAngle(
@@ -43,7 +55,7 @@ function AngleArcs({ points }: { points: Vector2[] }) {
     );
 
     const arcPath = d3.arc()({
-      innerRadius: outerRadius - 2,
+      innerRadius: outerRadius - 1,
       outerRadius,
       startAngle,
       endAngle,
@@ -58,20 +70,22 @@ function AngleArcs({ points }: { points: Vector2[] }) {
       labelPos
     );
 
+    const hasLabel = angles?.[i] !== undefined;
     const angleLabel = Math.round(rawAngle) + "°";
+    const label = angles?.[i] || angleLabel;
     return (
       <g key={i}>
-        {rawAngle === 90 ? (
+        {rawAngle === 90 && !hasLabel ? (
           <circle cx={labelX} cy={labelY} r={3} className="fill-red-400" />
         ) : (
           <text
             x={labelX}
             y={labelY}
-            className="text-xs fill-white"
+            className="text-xs fill-white uppercase font-bold tracking-tighter"
             dominantBaseline="middle"
             textAnchor="middle"
           >
-            {angleLabel}
+            {label}
           </text>
         )}
         <g transform={`translate(${x},${y})`}>

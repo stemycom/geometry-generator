@@ -121,8 +121,7 @@ You and the user can create math geometry for teaching math.`,
     functions: [
       {
         name: "draw_shape",
-        description:
-          `\
+        description: `\
 Get the current paramaters for drawing a 2D geometric shape.
 Make sure the shape is always in correlation with the angles if it's provided. eg. 90° should always produce a right angle.
 Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave some padding.`,
@@ -133,14 +132,13 @@ Keep in mind the bounds, so you dont draw outside width of 300 and height of 200
               `The points to draw the shape. In SVG shape points format e.g. "200,10 250,190 150,190"`
             ),
           angles: z
-            //.array(z.string().optional())
-            .any()
+            .array(z.union([z.string(), z.null()]))
             .describe(
               `\
-A collection of marks to indicate a corner on the shape if asked. Use an array of strings: eg. ['120°', '40°', '20°']
-Use undefined to skip an index. eg. [undefined, '90°'] to mark the points or ['X', undefined, 'Z']`
+A collection of marks to indicate a corner on the shape if asked. Use an array of strings: eg. ['A', 'B', 'C']
+Use null to skip an index. eg. [null, 'X'] to mark the points or ['X', null, 'Z']`
             )
-            .optional()
+            .optional(),
         }),
       },
     ],
@@ -156,11 +154,11 @@ Use undefined to skip an index. eg. [undefined, '90°'] to mark the points or ['
   });
 
   completion.onFunctionCall("draw_shape", async (props) => {
-    const { points } = props;
+    const { points, angles } = props;
 
     reply.done(
       <div className="flex">
-        <Triangle points={points} />
+        <Triangle points={points} angles={angles} />
         <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
       </div>
     );
