@@ -1,106 +1,110 @@
+import * as d3 from "d3";
+
 type Vector2 = [number, number];
 
-export function Triangle({
-  points
-}: {
-  points: string;
-  angles?: string;
-}) {
-    const pointsArray = points
-      .split(" ")
-      .map((point) => point.split(",").map(parseFloat)) as Vector2[];
-
-  //   const midPoints = [
-  //     getCentroid(
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] }
-  //     ),
-  //     getCentroid(
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] }
-  //     ),
-  //     getCentroid(
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] }
-  //     ),
-  //   ];
-
-  //   const midPointAngles = [
-  //     getLineAngle(
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] },
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] }
-  //     ),
-  //     getLineAngle(
-  //       { x: pointsArray[1][0], y: pointsArray[1][1] },
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] }
-  //     ),
-  //     getLineAngle(
-  //       { x: pointsArray[2][0], y: pointsArray[2][1] },
-  //       { x: pointsArray[0][0], y: pointsArray[0][1] }
-  //     ),
-  //   ];
+export function Triangle({ points }: { points: string; angles?: string }) {
+  const pointsArray = points
+    .split(" ")
+    .map((point) => point.split(",").map(parseFloat)) as Vector2[];
 
   return (
     <svg viewBox="0 0 300 200" width="300" height="200">
       <polygon
+        className="stroke stroke-2 fill-red-500/30 stroke-red-400"
         points={points}
-        className="stroke stroke-2 stroke-slate-500 fill-none"
       />
-      {pointsArray.map(([x, y], i) => {
-        const lastIndex = pointsArray.length - 1;
-        const rawAngle = calculateCornerAngle(
-          pointsArray[i === 0 ? lastIndex : i - 1],
-          pointsArray[i],
-          pointsArray[i === lastIndex ? 0 : i + 1],
-        )
-        const angle = Math.round(rawAngle) + "°";
-
-        return (
-          <>
-            <circle key={i} cx={x} cy={y} r="2" className="fill-slate-500" />
-            <text
-              x={x}
-              y={y}
-              className="text-xs fill-slate-500"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              {angle}
-            </text>
-          </>
-        );
-      })}
-      {/* 
-      {midPoints.map((point, i) => {
-        const textPos = findPointAtAngleAndDistance(
-          point,
-          midPointAngles[i] + Math.PI / 2,
-          16
-        );
-
-        return (
-          <>
-            <circle
-              key={i}
-              cx={point.x}
-              cy={point.y}
-              r="2"
-              className="fill-slate-500"
-            />
-            <text
-              x={textPos.x}
-              y={textPos.y}
-              className="text-xs fill-slate-500"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              {i === 0 ? "A" : i === 1 ? "B" : "C"}
-            </text>
-          </>
-        );
-      })} */}
+      <AngleArcs points={pointsArray} />
     </svg>
   );
+}
+
+function AngleArcs({ points }: { points: Vector2[] }) {
+  return points.map(([x, y], i) => {
+    const lastIndex = points.length - 1;
+    const rawAngle = calculateCornerAngle(
+      points[i === 0 ? lastIndex : i - 1],
+      points[i],
+      points[i === lastIndex ? 0 : i + 1]
+    );
+
+    const arcPath = d3.arc()({
+      innerRadius: 43,
+      outerRadius: 45,
+      ...getAngles(
+        points[i === 0 ? lastIndex : i - 1],
+        points[i],
+        points[i === lastIndex ? 0 : i + 1]
+      ),
+    })!;
+
+    const angleLabel = Math.round(rawAngle) + "°";
+    return (
+      <g key={i}>
+        <text
+          x={x}
+          y={y}
+          className="text-xs fill-white"
+          dominantBaseline="middle"
+          textAnchor="start"
+        >
+          {`${i}: ${angleLabel}`}
+        </text>
+        <g transform={`translate(${x},${y})`}>
+          <path d={arcPath} className="fill-red-400" />
+        </g>
+      </g>
+    );
+  });
+}
+
+function getAngles(
+  A: Vector2,
+  B: Vector2,
+  C: Vector2
+): { startAngle: number; endAngle: number } {
+  let startAngle = Math.atan2(B[1] - A[1], B[0] - A[0]);
+  let endAngle = Math.atan2(B[1] - C[1], B[0] - C[0]);
+
+  if (startAngle < 0) startAngle += 2 * Math.PI;
+  if (endAngle < 0) endAngle += 2 * Math.PI;
+
+  if (startAngle > endAngle) {
+    [startAngle, endAngle] = [endAngle, startAngle];
+  }
+
+  startAngle = startAngle -= Math.PI / 2;
+  endAngle = endAngle -= Math.PI / 2;
+
+  if (startAngle < 0) startAngle += 2 * Math.PI;
+
+  if (Math.abs(startAngle - endAngle) > Math.PI) {
+    if (endAngle > startAngle) startAngle += 2 * Math.PI;
+    else endAngle += 2 * Math.PI;
+  }
+
+  return { startAngle, endAngle };
+}
+
+function getLineLengths(points: Vector2[]): number[] {
+  let lengths = [];
+  for (let i = 0; i < points.length; i++) {
+    // get next index (loop to start for final point)
+    const nextIndex = i === points.length - 1 ? 0 : i + 1;
+    lengths.push(calculateDistance(points[i], points[nextIndex]));
+  }
+  return lengths;
+}
+
+function calculateDistance(pt1: Vector2, pt2: Vector2) {
+  return Math.sqrt(Math.pow(pt1[0] - pt2[0], 2) + Math.pow(pt1[1] - pt2[1], 2));
+}
+
+function getStartAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
+  let theta = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+  let theta2 = Math.atan2(p3[0] - p2[0], p3[1] - p2[1]);
+  let angle = theta2 - theta;
+  if (angle < 0) angle = 360 + angle;
+  return angle;
 }
 
 function calculateCornerAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
@@ -109,10 +113,12 @@ function calculateCornerAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
   let vectorP2P3 = [p3[0] - p2[0], p3[1] - p2[1]];
 
   // Compute the dot product of the two vectors
-  let dotProduct = vectorP2P1[0] * vectorP2P3[0] + vectorP2P1[1] * vectorP2P3[1];
+  let dotProduct =
+    vectorP2P1[0] * vectorP2P3[0] + vectorP2P1[1] * vectorP2P3[1];
 
   // Compute the cross product of the two vectors
-  let crossProduct = vectorP2P1[1] * vectorP2P3[0] - vectorP2P1[0] * vectorP2P3[1];
+  let crossProduct =
+    vectorP2P1[1] * vectorP2P3[0] - vectorP2P1[0] * vectorP2P3[1];
 
   // Calculate the angle and convert it to degrees
   let angle = Math.atan2(crossProduct, dotProduct) * (180 / Math.PI);
@@ -125,7 +131,10 @@ function calculateCornerAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
 }
 
 function getLineAngle(p1: Vector2, p2: Vector2): number {
-  return Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+  let theta = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+  // theta *= 180 / Math.PI;
+  // if (theta < 0) theta = 360 + theta;
+  return theta;
 }
 
 function findPointAtAngleAndDistance(
