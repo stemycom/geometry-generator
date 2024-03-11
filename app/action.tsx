@@ -18,7 +18,6 @@ import { Shape } from "@/components/shape";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
-//test
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   "use server";
