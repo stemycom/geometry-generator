@@ -131,7 +131,7 @@ Keep in mind the bounds, so you dont draw outside width of 300 and height of 200
             .describe(
               `The points to draw the shape. In SVG shape points format e.g. "200,10 250,190 150,190"`
             ),
-          angles: z
+          corners: z
             .array(z.union([z.string(), z.null()]))
             .describe(
               `\
@@ -154,11 +154,11 @@ Use null to skip an index. eg. [null, 'X'] to mark the points or ['X', null, 'Z'
   });
 
   completion.onFunctionCall("draw_shape", async (props) => {
-    const { points, angles } = props;
+    const { points, corners } = props;
 
     reply.done(
       <div className="flex">
-        <Triangle points={points} angles={angles} />
+        <Triangle points={points} corners={corners} />
         <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
       </div>
     );

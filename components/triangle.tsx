@@ -1,31 +1,38 @@
+"use client";
 import * as d3 from "d3";
+import { useState } from "react";
 
 type Vector2 = [number, number];
 
-export function Triangle({
-  points,
-  angles,
-}: {
+export function Triangle(props: {
   points: string;
-  angles?: (string | null | undefined)[];
+  corners?: (string | null | undefined)[];
 }) {
+  const [points, setPoints] = useState(props.points);
   const pointsArray = points
     .split(" ")
     .map((point) => point.split(",").map(parseFloat)) as Vector2[];
 
   return (
-    <svg
-      className="text-green-400"
-      viewBox="0 0 300 200"
-      width="300"
-      height="200"
-    >
-      <polygon
-        className="stroke fill-slate-400/10 stroke-slate-400"
-        points={points}
+    <div>
+      <svg
+        className="text-green-400"
+        viewBox="0 0 300 200"
+        width="300"
+        height="200"
+      >
+        <polygon
+          className="stroke fill-slate-400/10 stroke-slate-400"
+          points={points}
+        />
+        <AngleArcs points={pointsArray} angles={props.corners} />
+      </svg>
+      <input
+        className="w-full mt-8"
+        value={points}
+        onChange={(e) => setPoints(e.target.value)}
       />
-      <AngleArcs points={pointsArray} angles={angles} />
-    </svg>
+    </div>
   );
 }
 
