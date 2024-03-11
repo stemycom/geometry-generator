@@ -21,7 +21,7 @@ export function Triangle({
       height="200"
     >
       <polygon
-        className="stroke fill-red-400/20 stroke-red-400"
+        className="stroke fill-slate-400/10 stroke-slate-400"
         points={points}
       />
       <AngleArcs points={pointsArray} angles={angles} />
@@ -44,9 +44,11 @@ function AngleArcs({
       points[i === lastIndex ? 0 : i + 1]
     );
 
-    const outerRadius = d3.scaleLinear().domain([0, 180]).range([60, 10])(
+    const outerRadius = d3.scaleLog().domain([20, 180]).range([70, 20])(
       rawAngle
     );
+
+    const labelPos = d3.scaleLog().domain([20, 180]).range([55, 5])(rawAngle);
 
     const { startAngle, endAngle } = getAngles(
       points[i === 0 ? lastIndex : i - 1],
@@ -61,8 +63,6 @@ function AngleArcs({
       endAngle,
     })!;
 
-    const labelPos = d3.scalePow().domain([0, 180]).range([40, 2])(rawAngle);
-
     const medianAngle = (startAngle + endAngle) / 2;
     const [labelX, labelY] = movePoint(
       points[i],
@@ -76,12 +76,12 @@ function AngleArcs({
     return (
       <g key={i}>
         {rawAngle === 90 && !hasLabel ? (
-          <circle cx={labelX} cy={labelY} r={3} className="fill-red-400" />
+          <circle cx={labelX} cy={labelY} r={2} className="fill-slate-400" />
         ) : (
           <text
             x={labelX}
             y={labelY}
-            className="text-xs fill-white uppercase font-bold tracking-tighter"
+            className="text-xs fill-slate-600 dark:fill-slate-200 uppercase font-bold tracking-tighter"
             dominantBaseline="middle"
             textAnchor="middle"
           >
@@ -89,7 +89,7 @@ function AngleArcs({
           </text>
         )}
         <g transform={`translate(${x},${y})`}>
-          <path d={arcPath} className="fill-red-400" />
+          <path d={arcPath} className="fill-slate-400" />
         </g>
       </g>
     );
