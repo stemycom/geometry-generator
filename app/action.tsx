@@ -13,7 +13,6 @@ import {
 } from "@/lib/utils";
 import { z } from "zod";
 import { Triangle } from "@/components/triangle";
-import { Shape } from "@/components/shape";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -159,7 +158,7 @@ Use null to skip an index. eg. [null, 'X'] to mark the points or ['X', null, 'Z'
     reply.done(
       <div className="flex">
         <Triangle points={points} corners={corners} />
-        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
+        {/* <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre> */}
       </div>
     );
 

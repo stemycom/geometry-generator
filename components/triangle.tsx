@@ -1,6 +1,7 @@
 "use client";
 import * as d3 from "d3";
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { MotionConfig, motion } from "framer-motion";
 
 type Vector2 = [number, number];
 
@@ -8,32 +9,90 @@ export function Triangle(props: {
   points: string;
   corners?: (string | null | undefined)[];
 }) {
-  const [points, setPoints] = useState(props.points);
-  const pointsArray = points
-    .split(" ")
-    .map((point) => point.split(",").map(parseFloat)) as Vector2[];
+  const [points, setPoints] = useState(
+    () =>
+      props.points
+        .split(" ")
+        .map((point) => point.split(",").map(parseFloat)) as Vector2[]
+  );
+
+  const pointsPolygonString = points.map((point) => point.join(",")).join(" ");
 
   return (
-    <div>
-      <svg
-        className="text-green-400"
-        viewBox="0 0 300 200"
-        width="300"
-        height="200"
-      >
-        <polygon
-          className="stroke fill-slate-400/10 stroke-slate-400"
-          points={points}
-        />
-        <AngleArcs points={pointsArray} angles={props.corners} />
-      </svg>
-      <input
-        className="w-full mt-8"
-        value={points}
-        onChange={(e) => setPoints(e.target.value)}
-      />
-    </div>
+    <MotionConfig transition={spring.snappy}>
+      <div>
+        <motion.svg
+          whileHover="containerHover"
+          className="text-green-400"
+          viewBox="0 0 300 200"
+          width="300"
+          height="200"
+        >
+          <polygon
+            className="stroke fill-slate-400/10 stroke-slate-400"
+            points={pointsPolygonString}
+          />
+          <AngleArcs points={points} angles={props.corners} />
+          <DragPoints points={points} onUpdate={setPoints} />
+        </motion.svg>
+        {/* <input
+          className="w-full mt-8"
+          value={points}
+          onChange={(e) => setPoints(e.target.value)}
+        /> */}
+      </div>
+    </MotionConfig>
   );
+}
+
+function DragPoints({
+  points,
+  onUpdate,
+}: {
+  points: Vector2[];
+  onUpdate?: (points: Vector2[]) => void;
+}) {
+  const refs = useRef<SVGGElement[]>([]);
+  const initialPoints = useMemo(() => points, [points]);
+
+  return initialPoints.map((point, i) => {
+    const [x, y] = point;
+    const transformOrigin = `${x}px ${y}px`;
+
+    return (
+      <motion.g
+        key={i}
+        dragMomentum={false}
+        ref={(groupEl) => {
+          if (!groupEl) return;
+          refs.current[i] = groupEl;
+        }}
+        onPan={(_, info) => {
+          const newPoints = [...points];
+          newPoints[i] = [x + info.delta.x, y + info.delta.y];
+          onUpdate?.(newPoints);
+        }}
+        initial={{ scale: 0.5, opacity: 0 }}
+        variants={{
+          containerHover: {
+            scale: 1,
+            opacity: 1,
+          },
+        }}
+      >
+        <motion.g whileHover="childHover">
+          <motion.circle cx={x} cy={y} r={10} className="fill-blue-500/20" />
+          <motion.circle
+            cx={x}
+            cy={y}
+            r={10}
+            whileHover={{ scale: 1.5 }}
+            className="fill-blue-500"
+          />
+        </motion.g>
+      </motion.g>
+    );
+  });
 }
 
 function AngleArcs({
@@ -88,7 +147,7 @@ function AngleArcs({
           <text
             x={labelX}
             y={labelY}
-            className="text-xs fill-slate-600 dark:fill-slate-200 uppercase font-bold tracking-tighter"
+            className="text-xs fill-slate-600 dark:fill-slate-200 uppercase font-bold tracking-tighter select-none"
             dominantBaseline="middle"
             textAnchor="middle"
           >
@@ -216,3 +275,9 @@ function getCentroid(...arr: Vector2[]): Vector2 {
 
   return [centroidX, centroidY];
 }
+
+const spring = {
+  snappy: { type: "spring", stiffness: 2000, damping: 40, mass: 0.01 },
+  bouncy: { type: "spring", stiffness: 650, damping: 30, mass: 1 },
+  smooth: { type: "spring", stiffness: 550, damping: 32, mass: 0.05 },
+};
