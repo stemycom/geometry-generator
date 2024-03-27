@@ -29,6 +29,7 @@ export function Triangle(props: {
         style={{
           fontFamily:
             "ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+          color: "#94a3b8",
         }}
         viewBox="0 0 300 200"
         width="300"
@@ -40,9 +41,9 @@ export function Triangle(props: {
         <polygon
           className="stroke fill-slate-400/10 stroke-slate-400"
           style={{
-            strokeWidth: 2,
-            fill: "#94a3b833",
-            stroke: "#94a3b8",
+            strokeWidth: 1,
+            fill: "#94a3b822",
+            stroke: "currentcolor",
           }}
           points={pointsPolygonString}
         />
@@ -199,7 +200,7 @@ function AngleArcs({
             cy={labelY}
             r={2}
             style={{
-              fill: "#94a3b8",
+              fill: "currentColor",
             }}
           />
         ) : (
@@ -210,6 +211,7 @@ function AngleArcs({
             style={{
               fill: "#475569",
               fontSize: ".75rem",
+              stroke: "none",
               textTransform: "uppercase",
               fontWeight: 600,
               letterSpacing: "-0.05em",
@@ -224,7 +226,7 @@ function AngleArcs({
           <path
             d={arcPath}
             style={{
-              fill: "#94a3b8",
+              fill: "currentColor",
             }}
           />
         </g>
