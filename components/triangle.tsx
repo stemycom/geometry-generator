@@ -74,10 +74,14 @@ function Interactions({
         <Button
           size="icon"
           className="absolute bottom-0 right-0 hidden group-hover:flex"
-          onClick={() => {
+          onClick={(ev) => {
             //copy to clipboard
             const queryParams = new URLSearchParams(params);
-            const url = `http://localhost:3002/triangle.svg?${queryParams}`;
+            if (ev.metaKey)
+              return window.open(`/triangle.svg?${queryParams}`, "_blank");
+            const getBaseUrl = () =>
+              `${window.location.protocol}//${window.location.host}`;
+            const url = `${getBaseUrl()}/triangle.svg?${queryParams}`;
             const md = `![Image](${url} "Kolmnurk")`;
             navigator.clipboard.writeText(md);
           }}
