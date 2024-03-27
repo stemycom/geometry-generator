@@ -20,6 +20,8 @@ export function EmptyScreen({
     <div className="mx-auto max-w-2xl px-4">
       <div className="rounded-lg border bg-background p-8 mb-4">
         <h1 className="mb-2 text-lg font-semibold">Geometry!</h1>
+        <img src="triangle.svg" />
+        <Triangle points="20,150 250,150 275,50" />
         <div className="mt-4 flex flex-col items-start space-y-2 mb-4">
           {exampleMessages.map((message, index) => (
             <Button

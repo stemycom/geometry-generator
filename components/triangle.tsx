@@ -2,8 +2,9 @@
 import * as d3 from "d3";
 import { useMemo, useRef, useState } from "react";
 import { MotionConfig, motion } from "framer-motion";
-
-type Vector2 = [number, number];
+import * as React from "react";
+import { Button } from "./ui/button";
+import { CopyIcon } from "@radix-ui/react-icons";
 
 export function Triangle(props: {
   points: string;
@@ -19,30 +20,85 @@ export function Triangle(props: {
   const pointsPolygonString = points.map((point) => point.join(",")).join(" ");
 
   return (
+    <Interactions
+      render={!isServer}
+      params={{ ...props, points: pointsPolygonString }}
+    >
+      <motion.svg
+        whileHover="containerHover"
+        style={{
+          fontFamily:
+            "ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+        }}
+        viewBox="0 0 300 200"
+        width="300"
+        height="200"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
+      >
+        <polygon
+          className="stroke fill-slate-400/10 stroke-slate-400"
+          style={{
+            strokeWidth: 2,
+            fill: "#94a3b833",
+            stroke: "#94a3b8",
+          }}
+          points={pointsPolygonString}
+        />
+        <AngleArcs points={points} angles={props.corners} />
+        <DragPoints points={points} onUpdate={setPoints} />
+      </motion.svg>
+    </Interactions>
+  );
+}
+
+function Interactions({
+  children,
+  render,
+  params = {},
+}: {
+  children: React.ReactNode;
+  render: boolean;
+  params?: Record<string, any>;
+}) {
+  const [hydrated, setHydrated] = useState(false);
+  React.useEffect(() => {
+    setHydrated(true);
+  }, []);
+  if (!render || !hydrated) return children;
+  return (
     <MotionConfig transition={spring.snappy}>
-      <div>
-        <motion.svg
-          whileHover="containerHover"
-          className="text-green-400"
-          viewBox="0 0 300 200"
-          width="300"
-          height="200"
+      <div className="relative inline-block group">
+        {children}
+        <Button
+          size="icon"
+          className="absolute bottom-0 right-0 hidden group-hover:flex"
+          onClick={() => {
+            //copy to clipboard
+            const queryParams = new URLSearchParams(params);
+            const url = `http://localhost:3002/triangle.svg?${queryParams}`;
+            const md = `![Image](${url} "Kolmnurk")`;
+            navigator.clipboard.writeText(md);
+          }}
         >
-          <polygon
-            className="stroke fill-slate-400/10 stroke-slate-400"
-            points={pointsPolygonString}
-          />
-          <AngleArcs points={points} angles={props.corners} />
-          <DragPoints points={points} onUpdate={setPoints} />
-        </motion.svg>
-        {/* <input
-          className="w-full mt-8"
-          value={points}
-          onChange={(e) => setPoints(e.target.value)}
-        /> */}
+          <CopyIcon />
+        </Button>
       </div>
     </MotionConfig>
   );
+}
+
+function ConditionalWrapper({
+  condition,
+  wrapper,
+  children,
+}: {
+  condition: boolean;
+  wrapper: (children: React.ReactNode) => React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return condition ? wrapper(children) : children;
 }
 
 function DragPoints({
@@ -57,7 +113,6 @@ function DragPoints({
 
   return initialPoints.map((point, i) => {
     const [x, y] = point;
-    const transformOrigin = `${x}px ${y}px`;
 
     return (
       <motion.g
@@ -72,7 +127,7 @@ function DragPoints({
           newPoints[i] = [x + info.delta.x, y + info.delta.y];
           onUpdate?.(newPoints);
         }}
-        initial={{ scale: 0.5, opacity: 0 }}
+        initial={{ scale: 1, opacity: 0 }}
         variants={{
           containerHover: {
             scale: 1,
@@ -81,14 +136,7 @@ function DragPoints({
         }}
       >
         <motion.g whileHover="childHover">
-          <motion.circle cx={x} cy={y} r={10} className="fill-blue-500/20" />
-          <motion.circle
-            cx={x}
-            cy={y}
-            r={10}
-            whileHover={{ scale: 1.5 }}
-            className="fill-blue-500"
-          />
+          <motion.circle cx={x} cy={y} r={10} />
         </motion.g>
       </motion.g>
     );
@@ -142,12 +190,26 @@ function AngleArcs({
     return (
       <g key={i}>
         {rawAngle === 90 && !hasLabel ? (
-          <circle cx={labelX} cy={labelY} r={2} className="fill-slate-400" />
+          <circle
+            cx={labelX}
+            cy={labelY}
+            r={2}
+            style={{
+              fill: "#94a3b8",
+            }}
+          />
         ) : (
           <text
             x={labelX}
             y={labelY}
             className="text-xs fill-slate-600 dark:fill-slate-200 uppercase font-bold tracking-tighter select-none"
+            style={{
+              fill: "#475569",
+              fontSize: ".75rem",
+              textTransform: "uppercase",
+              fontWeight: 600,
+              letterSpacing: "-0.05em",
+            }}
             dominantBaseline="middle"
             textAnchor="middle"
           >
@@ -155,7 +217,12 @@ function AngleArcs({
           </text>
         )}
         <g transform={`translate(${x},${y})`}>
-          <path d={arcPath} className="fill-slate-400" />
+          <path
+            d={arcPath}
+            style={{
+              fill: "#94a3b8",
+            }}
+          />
         </g>
       </g>
     );
@@ -281,3 +348,6 @@ const spring = {
   bouncy: { type: "spring", stiffness: 650, damping: 30, mass: 1 },
   smooth: { type: "spring", stiffness: 550, damping: 32, mass: 0.05 },
 };
+
+const isServer = typeof window === "undefined";
+type Vector2 = [number, number];
