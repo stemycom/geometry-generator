@@ -49,9 +49,62 @@ export function Triangle(props: {
         />
         <AngleArcs points={points} angles={props.corners} />
         <SideMarkings points={points} />
+        <PointMarkings points={points} />
         <DragPoints points={points} onUpdate={setPoints} />
       </motion.svg>
     </Interactions>
+  );
+}
+
+function PointMarkings({ points }: { points: Vector2[] }) {
+  return (
+    <g>
+      {points.map((_, i) => {
+        //get median angle
+        const lastIndex = points.length - 1;
+        const nextIndex = i === lastIndex ? 0 : i + 1;
+        const prevIndex = i === 0 ? lastIndex : i - 1;
+        const angleOne =
+          Math.PI / 2 - getLineAngle(points[i], points[nextIndex]);
+        const angleTwo =
+          Math.PI / 2 - getLineAngle(points[i], points[prevIndex]);
+
+        const medianAngle = (angleOne + angleTwo) / 2;
+
+        const [x, y] = movePoint(points[i], medianAngle, -12);
+
+        return (
+          <text
+            key={i}
+            x={x}
+            y={y}
+            style={{
+              fill: "#475569",
+              fontSize: ".75rem",
+              stroke: "none",
+              fontWeight: 600,
+              letterSpacing: "-0.05em",
+              userSelect: "none",
+            }}
+            dominantBaseline="middle"
+            textAnchor="middle"
+          >
+            {i + 1}
+          </text>
+        );
+        return (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={3}
+            style={{
+              fill: "currentColor",
+            }}
+          />
+        );
+      })}
+    </g>
   );
 }
 
@@ -67,7 +120,7 @@ function SideMarkings({ points }: { points: Vector2[] }) {
         const pointOnLine = movePoint(points[i], angle, length / 2);
         const angleInDegrees = (angle * 180) / Math.PI;
         const angledUpside = angleInDegrees > 90 && angleInDegrees < 270;
-        const [x, y] = movePoint(pointOnLine, angle - 1, -10);
+        const [x, y] = movePoint(pointOnLine, angle - 1, -8);
 
         return (
           <text
