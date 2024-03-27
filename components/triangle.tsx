@@ -48,9 +48,49 @@ export function Triangle(props: {
           points={pointsPolygonString}
         />
         <AngleArcs points={points} angles={props.corners} />
+        <SideMarkings points={points} />
         <DragPoints points={points} onUpdate={setPoints} />
       </motion.svg>
     </Interactions>
+  );
+}
+
+function SideMarkings({ points }: { points: Vector2[] }) {
+  return (
+    <g>
+      {points.map((_, i) => {
+        const lastIndex = points.length - 1;
+        const nextIndex = i === lastIndex ? 0 : i + 1;
+        const length = calculateDistance(points[i], points[nextIndex]);
+        const angle = Math.PI / 2 - getLineAngle(points[i], points[nextIndex]);
+
+        const pointOnLine = movePoint(points[i], angle, length / 2);
+        const angleInDegrees = (angle * 180) / Math.PI;
+        const angledUpside = angleInDegrees > 90 && angleInDegrees < 270;
+        const [x, y] = movePoint(pointOnLine, angle - 1, -10);
+
+        return (
+          <text
+            key={i}
+            x={x}
+            y={y}
+            style={{
+              fill: "#475569",
+              fontSize: ".75rem",
+              stroke: "none",
+              fontWeight: 600,
+              letterSpacing: "-0.05em",
+              userSelect: "none",
+            }}
+            transform={`rotate(${angledUpside ? angleInDegrees - 180 : angleInDegrees} ${x} ${y})`}
+            dominantBaseline={angledUpside ? "baseline" : "hanging"}
+            textAnchor="middle"
+          >
+            {length.toFixed(0)}
+          </text>
+        );
+      })}
+    </g>
   );
 }
 
@@ -64,9 +104,11 @@ function Interactions({
   params?: Record<string, any>;
 }) {
   const [hydrated, setHydrated] = useState(false);
+
   React.useEffect(() => {
     setHydrated(true);
   }, []);
+
   if (!render || !hydrated) return children;
   return (
     <MotionConfig transition={spring.snappy}>
@@ -92,18 +134,6 @@ function Interactions({
       </div>
     </MotionConfig>
   );
-}
-
-function ConditionalWrapper({
-  condition,
-  wrapper,
-  children,
-}: {
-  condition: boolean;
-  wrapper: (children: React.ReactNode) => React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return condition ? wrapper(children) : children;
 }
 
 function DragPoints({
@@ -318,8 +348,8 @@ function calculateCornerAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
 
 function getLineAngle(p1: Vector2, p2: Vector2): number {
   let theta = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
-  // theta *= 180 / Math.PI;
-  // if (theta < 0) theta = 360 + theta;
+  //theta *= 180 / Math.PI;
+  //if (theta < 0) theta = 360 + theta;
   return theta;
 }
 
