@@ -35,8 +35,16 @@ export function EmptyScreen({
             </Button>
           ))}
         </div>
-        <Triangle points="50,150 250,150 250,50" />
-        <img src="triangle.svg" />
+        <Triangle points="50,150 250,50 250,150" />
+        <Triangle points="50,150 250,50 250,150" angles={["x", null, null]} />
+        <Triangle points="50,150 250,50 250,150" corners={["A", null, null]} />
+        <Triangle points="50,150 250,50 250,150" sides={["a", null, null]} />
+        <Triangle
+          points="50,150 250,50 250,150"
+          angles={["x", null, null]}
+          corners={["A", null, null]}
+          sides={["a", null, null]}
+        />
       </div>
       <p className="leading-normal text-muted-foreground text-[0.8rem] text-center max-w-96 ml-auto mr-auto">
         Note: Data and latency are simulated for illustrative purposes and

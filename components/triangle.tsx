@@ -8,7 +8,9 @@ import { CopyIcon } from "@radix-ui/react-icons";
 
 export function Triangle(props: {
   points: string;
+  angles?: (string | null | undefined)[];
   corners?: (string | null | undefined)[];
+  sides?: (string | null | undefined)[];
 }) {
   const [points, setPoints] = useState(
     () =>
@@ -47,16 +49,26 @@ export function Triangle(props: {
           }}
           points={pointsPolygonString}
         />
-        <AngleArcs points={points} angles={props.corners} />
-        <SideMarkings points={points} />
-        <PointMarkings points={points} />
+        {Boolean(props.angles?.length) && (
+          <AngleArcs points={points} angles={props.angles} />
+        )}
+        {props.corners && (
+          <CornerMarkings points={points} corners={props.corners} />
+        )}
+        {props.sides && <SideMarkings points={points} sides={props.sides} />}
         <DragPoints points={points} onUpdate={setPoints} />
       </motion.svg>
     </Interactions>
   );
 }
 
-function PointMarkings({ points }: { points: Vector2[] }) {
+function CornerMarkings({
+  points,
+  corners,
+}: {
+  points: Vector2[];
+  corners?: (string | null | undefined)[];
+}) {
   return (
     <g>
       {points.map((_, i) => {
@@ -72,6 +84,7 @@ function PointMarkings({ points }: { points: Vector2[] }) {
         const medianAngle = (angleOne + angleTwo) / 2;
 
         const [x, y] = movePoint(points[i], medianAngle, -12);
+        const label = corners?.[i] || String.fromCharCode(65 + i);
 
         return (
           <text
@@ -89,26 +102,21 @@ function PointMarkings({ points }: { points: Vector2[] }) {
             dominantBaseline="middle"
             textAnchor="middle"
           >
-            {i + 1}
+            {label}
           </text>
-        );
-        return (
-          <circle
-            key={i}
-            cx={x}
-            cy={y}
-            r={3}
-            style={{
-              fill: "currentColor",
-            }}
-          />
         );
       })}
     </g>
   );
 }
 
-function SideMarkings({ points }: { points: Vector2[] }) {
+function SideMarkings({
+  points,
+  sides,
+}: {
+  points: Vector2[];
+  sides?: (string | null | undefined)[];
+}) {
   return (
     <g>
       {points.map((_, i) => {
@@ -120,7 +128,9 @@ function SideMarkings({ points }: { points: Vector2[] }) {
         const pointOnLine = movePoint(points[i], angle, length / 2);
         const angleInDegrees = (angle * 180) / Math.PI;
         const angledUpside = angleInDegrees > 90 && angleInDegrees < 270;
-        const [x, y] = movePoint(pointOnLine, angle - 1, -8);
+        const [x, y] = movePoint(pointOnLine, angle - Math.PI / 2, 16);
+
+        const label = sides?.[i] || length.toFixed(0);
 
         return (
           <text
@@ -139,7 +149,7 @@ function SideMarkings({ points }: { points: Vector2[] }) {
             dominantBaseline={angledUpside ? "baseline" : "hanging"}
             textAnchor="middle"
           >
-            {length.toFixed(0)}
+            {label}
           </text>
         );
       })}
@@ -171,7 +181,6 @@ function Interactions({
           size="icon"
           className="absolute bottom-0 right-0 hidden group-hover:flex"
           onClick={(ev) => {
-            //copy to clipboard
             const queryParams = new URLSearchParams(params);
             if (ev.metaKey)
               return window.open(`/triangle.svg?${queryParams}`, "_blank");
