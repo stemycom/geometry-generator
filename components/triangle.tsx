@@ -5,13 +5,48 @@ import { MotionConfig, motion } from "framer-motion";
 import * as React from "react";
 import { Button } from "./ui/button";
 import { CopyIcon } from "@radix-ui/react-icons";
+import { z } from "zod";
 
-export function Triangle(props: {
-  points: string;
-  angles?: (string | null | undefined)[];
-  corners?: (string | null | undefined)[];
-  sides?: (string | null | undefined)[];
-}) {
+export const triangleDrawPrompt = {
+  name: "draw_shape",
+  description: `\
+Get the current paramaters for drawing a 2D geometric shape. The shape will be drawn on the screen.
+Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave padding.`,
+  parameters: z.object({
+    points: z
+      .string()
+      .describe(
+        `The points to draw the shape. In SVG shape points format e.g. "200,10 250,190 150,190"`
+      ),
+    angles: z
+      .array(z.union([z.string(), z.boolean()]))
+      .describe(
+        `\
+For angle indicators. Use an array of strings: eg. ['a', 'b', 'c']. Keep the correlation of the points and angles.
+eg. If the points are "50,150 250,150 250,50" the 90 degree angle should be at the SECOND index. Since it corresponds to the second point "250,150".
+If you need to hide an angle, use false. eg. ['a', false, 'c']
+If you need to show an angle in degrees, use a "true". The user will be shown calculated angle in degrees. eg. [true, true, true] (this will show all three angles in degrees)`
+      )
+      .optional(),
+    corners: z
+      .array(z.union([z.string(), z.null()]))
+      .describe(
+        `
+A collection of marks to indicate a vertecies on the shape if asked. Use an array of strings: eg. ['A', 'B', 'C']`
+      )
+      .optional(),
+    sides: z
+      .array(z.union([z.string(), z.null()]))
+      .describe(
+        `\
+A collection of marks to indicate a sides on the shape if asked. Use an array of strings: eg. ['x', 'y', 'z']`
+      )
+      .optional(),
+  }),
+};
+type Props = z.infer<(typeof triangleDrawPrompt)["parameters"]>;
+
+export function Triangle(props: Props) {
   const [points, setPoints] = useState(
     () =>
       props.points
@@ -49,13 +84,13 @@ export function Triangle(props: {
           }}
           points={pointsPolygonString}
         />
-        {Boolean(props.corners) && (
+        {Boolean(props.corners?.length) && (
           <CornerMarkings points={points} corners={props.corners} />
         )}
         {Boolean(props.angles?.length) && (
           <AngleArcs points={points} angles={props.angles} />
         )}
-        {Boolean(props.sides) && (
+        {Boolean(props.sides?.length) && (
           <SideMarkings points={points} sides={props.sides} />
         )}
         <DragPoints points={points} onUpdate={setPoints} />
@@ -69,7 +104,7 @@ function CornerMarkings({
   corners,
 }: {
   points: Vector2[];
-  corners?: (string | null | undefined)[];
+  corners?: Props["corners"];
 }) {
   return (
     <g>
@@ -116,7 +151,7 @@ function SideMarkings({
   sides,
 }: {
   points: Vector2[];
-  sides?: (string | null | undefined)[];
+  sides?: Props["sides"];
 }) {
   return (
     <g>
@@ -246,7 +281,7 @@ function AngleArcs({
   angles,
 }: {
   points: Vector2[];
-  angles?: (string | null | undefined)[];
+  angles?: Props["angles"];
 }) {
   return points.map(([x, y], i) => {
     const lastIndex = points.length - 1;

@@ -36,12 +36,12 @@ export function EmptyScreen({
           ))}
         </div>
         <Triangle points="50,150 250,50 250,150" />
-        <Triangle points="50,150 250,50 250,150" angles={["x", null, null]} />
+        <Triangle points="50,150 250,50 250,150" angles={["x", false, false]} />
         <Triangle points="50,150 250,50 250,150" corners={["A", null, null]} />
         <Triangle points="50,150 250,50 250,150" sides={["a", null, null]} />
         <Triangle
           points="50,150 250,50 250,150"
-          angles={["x", null, null]}
+          angles={["x", false, false]}
           corners={["A", null, null]}
           sides={["a", null, null]}
         />

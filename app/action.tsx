@@ -12,7 +12,7 @@ import {
   runOpenAICompletion,
 } from "@/lib/utils";
 import { z } from "zod";
-import { Triangle } from "@/components/triangle";
+import { Triangle, triangleDrawPrompt } from "@/components/triangle";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -85,6 +85,14 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   };
 }
 
+const triangleAiPrompt = {
+  name: "draw_shapes",
+  description: `\
+Get the current paramaters for drawing a 2D geometric shape. The shape will be drawn on the screen.
+Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave padding.`,
+  parameters: z.object({ points: z.string() }),
+};
+
 async function submitUserMessage(content: string) {
   "use server";
 
@@ -117,44 +125,7 @@ You and the user can create math geometry for teaching math.`,
         name: info.name,
       })),
     ],
-    functions: [
-      {
-        name: "draw_shape",
-        description: `\
-Get the current paramaters for drawing a 2D geometric shape.
-Make sure the shape is always in correlation with the angles if it's provided. eg. 90° should always produce a right angle.
-Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave some padding.`,
-        parameters: z.object({
-          points: z
-            .string()
-            .describe(
-              `The points to draw the shape. In SVG shape points format e.g. "200,10 250,190 150,190"`
-            ),
-          angles: z
-            .array(z.union([z.string(), z.null()]))
-            .describe(
-              `\
-A collection of marks to indicate an angle on the shape if asked. Use an array of strings: eg. ['a', 'b', 'c']
-Use null to skip an index. eg. [null, 'X'] to mark the points or ['X', null, 'Z']`
-            )
-            .optional(),
-          corners: z
-            .array(z.union([z.string(), z.null()]))
-            .describe(
-              `
-A collection of marks to indicate a vertecies on the shape if asked. Use an array of strings: eg. ['A', 'B', 'C']`
-            )
-            .optional(),
-          sides: z
-            .array(z.union([z.string(), z.null()]))
-            .describe(
-              `\
-A collection of marks to indicate a sides on the shape if asked. Use an array of strings: eg. ['x', 'y', 'z']`
-            )
-            .optional(),
-        }),
-      },
-    ],
+    functions: [triangleDrawPrompt],
     temperature: 0.1,
   });
 
@@ -167,11 +138,9 @@ A collection of marks to indicate a sides on the shape if asked. Use an array of
   });
 
   completion.onFunctionCall("draw_shape", async (props) => {
-    const { points, corners } = props;
-
     reply.done(
       <div className="flex">
-        <Triangle points={points} corners={corners} />
+        <Triangle {...props} />
         <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
       </div>
     );
