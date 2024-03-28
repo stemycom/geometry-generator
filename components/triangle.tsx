@@ -49,13 +49,15 @@ export function Triangle(props: {
           }}
           points={pointsPolygonString}
         />
+        {Boolean(props.corners) && (
+          <CornerMarkings points={points} corners={props.corners} />
+        )}
         {Boolean(props.angles?.length) && (
           <AngleArcs points={points} angles={props.angles} />
         )}
-        {props.corners && (
-          <CornerMarkings points={points} corners={props.corners} />
+        {Boolean(props.sides) && (
+          <SideMarkings points={points} sides={props.sides} />
         )}
-        {props.sides && <SideMarkings points={points} sides={props.sides} />}
         <DragPoints points={points} onUpdate={setPoints} />
       </motion.svg>
     </Interactions>
@@ -72,7 +74,6 @@ function CornerMarkings({
   return (
     <g>
       {points.map((_, i) => {
-        //get median angle
         const lastIndex = points.length - 1;
         const nextIndex = i === lastIndex ? 0 : i + 1;
         const prevIndex = i === 0 ? lastIndex : i - 1;
@@ -81,9 +82,9 @@ function CornerMarkings({
         const angleTwo =
           Math.PI / 2 - getLineAngle(points[i], points[prevIndex]);
 
-        const medianAngle = (angleOne + angleTwo) / 2;
+        const averageAngle = averageAngles(angleOne, angleTwo);
 
-        const [x, y] = movePoint(points[i], medianAngle, -12);
+        const [x, y] = movePoint(points[i], averageAngle, -12);
         const label = corners?.[i] || String.fromCharCode(65 + i);
 
         return (
@@ -409,10 +410,24 @@ function calculateCornerAngle(p1: Vector2, p2: Vector2, p3: Vector2): number {
 }
 
 function getLineAngle(p1: Vector2, p2: Vector2): number {
-  let theta = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
-  //theta *= 180 / Math.PI;
-  //if (theta < 0) theta = 360 + theta;
-  return theta;
+  return Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+}
+
+function averageAngles(theta1: number, theta2: number): number {
+  // Convert angles to vectors
+  const x1 = Math.cos(theta1);
+  const y1 = Math.sin(theta1);
+  const x2 = Math.cos(theta2);
+  const y2 = Math.sin(theta2);
+
+  // Average the vectors
+  const xAvg = (x1 + x2) / 2;
+  const yAvg = (y1 + y2) / 2;
+
+  // Convert the average vector back to an angle
+  const thetaAvg = Math.atan2(yAvg, xAvg);
+
+  return thetaAvg;
 }
 
 function findPointAtAngleAndDistance(
