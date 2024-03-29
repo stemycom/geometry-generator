@@ -133,7 +133,7 @@ function SideMarkings({
         const [x, y] = movePoint(
           pointOnLine,
           angle - Math.PI / 2,
-          isClockwise ? 16 : -16
+          isClockwise ? 12 : -12
         );
 
         const label = sides?.[i] || length.toFixed(0);
@@ -148,7 +148,6 @@ function SideMarkings({
               fontSize: ".75rem",
               stroke: "none",
               fontWeight: 600,
-              letterSpacing: "-0.05em",
               userSelect: "none",
             }}
             transform={`rotate(${angledUpside ? angleInDegrees - 180 : angleInDegrees} ${x} ${y})`}
