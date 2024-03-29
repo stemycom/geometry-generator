@@ -117,6 +117,8 @@ function SideMarkings({
   points: Vector2[];
   sides?: Props["sides"];
 }) {
+  const isClockwise = isDrawnClockwise(points);
+
   return (
     <g>
       {points.map((_, i) => {
@@ -128,7 +130,11 @@ function SideMarkings({
         const pointOnLine = movePoint(points[i], angle, length / 2);
         const angleInDegrees = (angle * 180) / Math.PI;
         const angledUpside = angleInDegrees > 90 && angleInDegrees < 270;
-        const [x, y] = movePoint(pointOnLine, angle - Math.PI / 2, 16);
+        const [x, y] = movePoint(
+          pointOnLine,
+          angle - Math.PI / 2,
+          isClockwise ? 16 : -16
+        );
 
         const label = sides?.[i] || length.toFixed(0);
 
@@ -281,12 +287,18 @@ function AngleArcs({
       labelPos
     );
 
-    const hasLabel = angles?.[i] !== undefined;
+    const showLabel = angles?.[i] === true;
+
     const angleLabel = Math.round(rawAngle) + "°";
-    const label = angles?.[i] || angleLabel;
+    const showCustomLabel = typeof angles?.[i] === "string";
+    const customLabel = angles?.[i] as string;
+
+    const label = showCustomLabel ? customLabel : angleLabel;
+
+    if (!showLabel) return null;
     return (
       <g key={i}>
-        {rawAngle === 90 && !hasLabel ? (
+        {rawAngle === 90 && !showCustomLabel ? (
           <circle
             cx={labelX}
             cy={labelY}
@@ -438,6 +450,24 @@ function findPointAtAngleAndDistance(
     centroid[0] + distance * Math.cos(angle),
     centroid[1] + distance * Math.sin(angle),
   ];
+}
+
+function calculateSignedArea(points: number[][]): number {
+  let area = 0;
+  const n = points.length;
+
+  for (let i = 0; i < n; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % n];
+    area += x1 * y2 - x2 * y1;
+  }
+
+  return area / 2;
+}
+
+function isDrawnClockwise(points: number[][]) {
+  const area = calculateSignedArea(points);
+  return area! > 0;
 }
 
 function getCentroid(...arr: Vector2[]): Vector2 {
