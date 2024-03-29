@@ -43,10 +43,11 @@ A collection of marks to indicate a vertecies on the shape if asked. Use an arra
       )
       .optional(),
     sides: z
-      .array(z.union([z.string(), z.null()]))
+      .array(z.union([z.string(), z.boolean()]))
       .describe(
         `\
-A collection of marks to indicate a sides on the shape if asked. Use an array of strings: eg. ['x', 'y', 'z']`
+A collection of marks to indicate a sides on the shape if asked. Use an array of strings: eg. ['x', 'y', 'z']
+If you need to show a side length, use a "true". The user will be shown calculated length. eg. [true, true, true] (this will show all three sides)`
       )
       .optional(),
   }),
@@ -123,7 +124,7 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   };
 }
 
-async function submitUserMessage(content: string) {
+async function submitUserMessage(content: string, newPath?: string) {
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
@@ -147,7 +148,11 @@ async function submitUserMessage(content: string) {
         role: "system",
         content: `\
 You are a math visualisation assistant specializing in geometric shapes.
-You and the user can create math geometry for teaching math.`,
+You and the user can create math geometry for teaching math.
+
+Messages inside [] means that it's a UI element or a user event. For example:
+- '[User has changed the shape points to "50,150 250,150 200,50 100,50"]' means that the user has changed the shape to a new value.
+`,
       },
       ...aiState.get().map((info: any) => ({
         role: info.role,

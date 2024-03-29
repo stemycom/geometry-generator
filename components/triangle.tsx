@@ -6,7 +6,8 @@ import * as React from "react";
 import { Button } from "./ui/button";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { z } from "zod";
-import { triangleDrawPrompt } from "@/app/action";
+import { AI, triangleDrawPrompt } from "@/app/action";
+import { useAIState } from "ai/rsc";
 
 type Props = z.infer<(typeof triangleDrawPrompt)["parameters"]>;
 
@@ -17,8 +18,27 @@ export function Triangle(props: Props) {
         .split(" ")
         .map((point) => point.split(",").map(parseFloat)) as Vector2[]
   );
+  const [history, setHistory] = useAIState<typeof AI>();
+  const id = React.useId();
 
   const pointsPolygonString = points.map((point) => point.join(",")).join(" ");
+
+  function updateAiHistory() {
+    const newValue = pointsPolygonString;
+
+    const info = {
+      role: "system" as const,
+      content: `[User has changed the shape points to "${newValue}"]`,
+      id,
+    };
+
+    if (history[history.length - 1]?.id === id) {
+      setHistory([...history.slice(0, -1), info]);
+      return;
+    }
+
+    setHistory([...history, info]);
+  }
 
   return (
     <Interactions
@@ -57,7 +77,13 @@ export function Triangle(props: Props) {
         {Boolean(props.sides?.length) && (
           <SideMarkings points={points} sides={props.sides} />
         )}
-        <DragPoints points={points} onUpdate={setPoints} />
+        <DragPoints
+          points={points}
+          onUpdate={(p) => {
+            setPoints(p);
+            updateAiHistory();
+          }}
+        />
       </motion.svg>
     </Interactions>
   );
@@ -85,7 +111,9 @@ function CornerMarkings({
 
         const [x, y] = movePoint(points[i], averageAngle, -12);
         const label = corners?.[i] || String.fromCharCode(65 + i);
+        const showLabel = corners?.[i] !== null;
 
+        if (!showLabel) return null;
         return (
           <text
             key={i}
@@ -136,8 +164,13 @@ function SideMarkings({
           isClockwise ? 12 : -12
         );
 
-        const label = sides?.[i] || length.toFixed(0);
+        const hasCustomLabel = typeof sides?.[i] === "string";
+        const showLabel = sides?.[i] !== false;
+        const label = hasCustomLabel
+          ? (sides?.[i] as string)
+          : length.toFixed(0);
 
+        if (!showLabel) return null;
         return (
           <text
             key={i}
@@ -151,7 +184,7 @@ function SideMarkings({
               userSelect: "none",
             }}
             transform={`rotate(${angledUpside ? angleInDegrees - 180 : angleInDegrees} ${x} ${y})`}
-            dominantBaseline={angledUpside ? "baseline" : "hanging"}
+            dominantBaseline="middle"
             textAnchor="middle"
           >
             {label}
