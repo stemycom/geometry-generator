@@ -260,11 +260,15 @@ function AngleArcs({
       points[i === lastIndex ? 0 : i + 1]
     );
 
-    const outerRadius = d3.scaleLog().domain([20, 180]).range([70, 20])(
-      rawAngle
-    );
+    const rightAngle = rawAngle === 90;
 
-    const labelPos = d3.scaleLog().domain([20, 180]).range([55, 5])(rawAngle);
+    const outerRadius = rightAngle
+      ? 30
+      : d3.scaleLog().domain([20, 180]).range([70, 20])(rawAngle);
+
+    const labelPos = rightAngle
+      ? 17
+      : d3.scaleLog().domain([20, 180]).range([55, 5])(rawAngle);
 
     const { startAngle, endAngle } = getAngles(
       points[i === 0 ? lastIndex : i - 1],
