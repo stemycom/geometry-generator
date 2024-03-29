@@ -123,14 +123,6 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   };
 }
 
-const triangleAiPrompt = {
-  name: "draw_shapes",
-  description: `\
-Get the current paramaters for drawing a 2D geometric shape. The shape will be drawn on the screen.
-Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave padding.`,
-  parameters: z.object({ points: z.string() }),
-};
-
 async function submitUserMessage(content: string) {
   "use server";
 
