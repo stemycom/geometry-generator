@@ -328,7 +328,7 @@ function AngleArcs({
       labelPos
     );
 
-    const showLabel = angles?.[i] === true;
+    const showLabel = angles?.[i] !== false;
 
     const angleLabel = Math.round(rawAngle) + "°";
     const showCustomLabel = typeof angles?.[i] === "string";

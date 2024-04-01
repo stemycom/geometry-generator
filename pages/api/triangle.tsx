@@ -13,16 +13,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       ?.split(",")
       .map(safeParseJson),
   };
+  console.log(req.query);
+  console.log(props);
   const markup = ReactDOMServer.renderToStaticMarkup(<Triangle {...props} />);
 
   res.setHeader("Content-Type", "image/svg+xml");
   return res.status(200).send(markup);
 }
 
-function safeParseJson(json: string) {
+function safeParseJson(string: string) {
   try {
-    return JSON.parse(json);
+    return JSON.parse(string);
   } catch (e) {
-    return null;
+    return string;
   }
 }
