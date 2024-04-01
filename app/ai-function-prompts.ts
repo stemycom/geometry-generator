@@ -18,7 +18,7 @@ export const triangleDrawPrompt = {
   For angle indicators. Use an array of strings: eg. ['a', 'b', 'c']. Keep the correlation of the points and angles.
   eg. If the points are "50,150 250,150 250,50" the 90 degree angle should be at the SECOND index. Since it corresponds to the second point "250,150".
   If you need to hide an angle, use false. eg. ['a', false, 'c']
-  If you need to show an angle in degrees, use a "true". The user will be shown calculated angle in degrees. eg. [true, true, true] (this will show all three angles in degrees)`
+  If you need to show an angle in degrees, use a boolean true value. The user will be shown calculated angle in degrees. eg. [true, true, true] (this will show all three angles in degrees)`
       )
       .optional(),
     corners: z
