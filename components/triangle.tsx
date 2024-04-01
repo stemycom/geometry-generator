@@ -18,33 +18,11 @@ export function Triangle(props: Props) {
         .split(" ")
         .map((point) => point.split(",").map(parseFloat)) as Vector2[]
   );
-  const [history, setHistory] = useAIState<typeof AI>();
-  const id = React.useId();
 
-  const pointsPolygonString = points.map((point) => point.join(",")).join(" ");
-
-  function updateAiHistory() {
-    const newValue = pointsPolygonString;
-
-    const info = {
-      role: "system" as const,
-      content: `[User has changed the shape points to "${newValue}"]`,
-      id,
-    };
-
-    if (history[history.length - 1]?.id === id) {
-      setHistory([...history.slice(0, -1), info]);
-      return;
-    }
-
-    setHistory([...history, info]);
-  }
+  const path = pointsToPath(points);
 
   return (
-    <Interactions
-      render={!isServer}
-      params={{ ...props, points: pointsPolygonString }}
-    >
+    <Interactions render={!isServer} params={{ ...props, points: path }}>
       <motion.svg
         whileHover="containerHover"
         style={{
@@ -66,7 +44,7 @@ export function Triangle(props: Props) {
             fill: "#94a3b822",
             stroke: "currentcolor",
           }}
-          points={pointsPolygonString}
+          points={path}
         />
         {Boolean(props.corners?.length) && (
           <CornerMarkings points={points} corners={props.corners} />
@@ -77,13 +55,9 @@ export function Triangle(props: Props) {
         {Boolean(props.sides?.length) && (
           <SideMarkings points={points} sides={props.sides} />
         )}
-        <DragPoints
-          points={points}
-          onUpdate={(p) => {
-            setPoints(p);
-            updateAiHistory();
-          }}
-        />
+        {!isServer && (
+          <DragPoints points={points} onUpdate={(p) => setPoints(p)} />
+        )}
       </motion.svg>
     </Interactions>
   );
@@ -136,6 +110,10 @@ function CornerMarkings({
       })}
     </g>
   );
+}
+
+function pointsToPath(points: Vector2[]): string {
+  return points.map((point) => point.join(",")).join(" ");
 }
 
 function SideMarkings({
@@ -250,6 +228,26 @@ function DragPoints({
 }) {
   const refs = useRef<SVGGElement[]>([]);
   const initialPoints = useMemo(() => points, [points]);
+  const id = React.useId();
+
+  const [history, setHistory] = useAIState<typeof AI>();
+
+  function updateAiHistory() {
+    const newValue = pointsToPath(points);
+
+    const info = {
+      role: "system" as const,
+      content: `[User has changed the shape points to "${newValue}"]`,
+      id,
+    };
+
+    if (history[history.length - 1]?.id === id) {
+      setHistory([...history.slice(0, -1), info]);
+      return;
+    }
+
+    setHistory([...history, info]);
+  }
 
   return initialPoints.map((point, i) => {
     const [x, y] = point;
@@ -266,6 +264,7 @@ function DragPoints({
           const newPoints = [...points];
           newPoints[i] = [x + info.delta.x, y + info.delta.y];
           onUpdate?.(newPoints);
+          updateAiHistory();
         }}
         initial={{ scale: 1, opacity: 0 }}
         variants={{
