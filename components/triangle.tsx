@@ -170,6 +170,11 @@ function SideMarkings({
           ? (sides?.[i] as string)
           : length.toFixed(0);
 
+        const transform =
+          label.length > 1
+            ? `rotate(${angledUpside ? angleInDegrees - 180 : angleInDegrees} ${x} ${y})`
+            : "";
+
         if (!showLabel) return null;
         return (
           <text
@@ -183,7 +188,7 @@ function SideMarkings({
               fontWeight: 600,
               userSelect: "none",
             }}
-            transform={`rotate(${angledUpside ? angleInDegrees - 180 : angleInDegrees} ${x} ${y})`}
+            transform={transform}
             dominantBaseline="middle"
             textAnchor="middle"
           >
