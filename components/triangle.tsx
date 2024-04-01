@@ -6,8 +6,9 @@ import * as React from "react";
 import { Button } from "./ui/button";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { z } from "zod";
-import { AI, triangleDrawPrompt } from "@/app/action";
+import { AI } from "@/app/action";
 import { useAIState } from "ai/rsc";
+import { triangleDrawPrompt } from "@/app/ai-function-prompts";
 
 type Props = z.infer<(typeof triangleDrawPrompt)["parameters"]>;
 
