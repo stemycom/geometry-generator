@@ -206,10 +206,10 @@ function Interactions({
             const queryParams = new URLSearchParams(params);
             if (ev.metaKey)
               return window.open(`/triangle.svg?${queryParams}`, "_blank");
-            const getBaseUrl = () =>
-              `${window.location.protocol}//${window.location.host}`;
-            const url = `${getBaseUrl()}/triangle.svg?${queryParams}`;
-            const md = `![Image](${url} "Kolmnurk")`;
+            // const getBaseUrl = () =>
+            //   `${window.location.protocol}//${window.location.host}`;
+            const url = `/geometry/triangle.svg?${queryParams}`;
+            const md = `![Image](${url})`;
             navigator.clipboard.writeText(md);
           }}
         >
