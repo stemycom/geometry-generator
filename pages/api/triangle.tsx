@@ -13,8 +13,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       ?.split(",")
       .map(safeParseJson),
   };
-  console.log(req.query);
-  console.log(props);
+
   const markup = ReactDOMServer.renderToStaticMarkup(<Triangle {...props} />);
 
   res.setHeader("Content-Type", "image/svg+xml");

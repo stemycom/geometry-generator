@@ -264,14 +264,27 @@ function DragPoints({
         onPan={(_, info) => {
           const newPoints = [...points];
           newPoints[i] = [x + info.delta.x, y + info.delta.y];
+          const padding = 20;
+          newPoints[i][0] = Math.min(
+            300 - padding,
+            Math.max(padding, newPoints[i][0])
+          );
+          newPoints[i][1] = Math.min(
+            200 - padding,
+            Math.max(padding, newPoints[i][1])
+          );
           onUpdate?.(newPoints);
           updateAiHistory();
         }}
-        initial={{ scale: 1, opacity: 0 }}
+        initial={{ opacity: 0, scale: 0 }}
+        style={{
+          originX: `${x}px`,
+          originY: `${y}px`,
+        }}
         variants={{
           containerHover: {
-            scale: 1,
             opacity: 1,
+            scale: 1,
           },
         }}
       >
