@@ -189,6 +189,15 @@ function Interactions({
   params?: Record<string, any>;
 }) {
   const [hydrated, setHydrated] = useState(false);
+  const [copyLabel, setCopyLabel] = useState(false);
+
+  React.useEffect(() => {
+    if (!copyLabel) return;
+    const timeout = setTimeout(() => {
+      setCopyLabel(false);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [copyLabel]);
 
   React.useEffect(() => {
     setHydrated(true);
@@ -200,10 +209,12 @@ function Interactions({
       <div className="relative inline-block group">
         {children}
         <Button
-          size="icon"
+          size="sm"
           className="absolute bottom-0 right-0 hidden group-hover:flex"
+          disabled={copyLabel}
           onClick={(ev) => {
             const queryParams = new URLSearchParams(params);
+            setCopyLabel(true);
             if (ev.metaKey)
               return window.open(`/triangle.svg?${queryParams}`, "_blank");
             // const getBaseUrl = () =>
@@ -213,7 +224,7 @@ function Interactions({
             navigator.clipboard.writeText(md);
           }}
         >
-          <CopyIcon />
+          {!copyLabel ? <CopyIcon /> : "Copied!"}
         </Button>
       </div>
     </MotionConfig>
@@ -289,7 +300,17 @@ function DragPoints({
         }}
       >
         <motion.g whileHover="childHover">
-          <motion.circle cx={x} cy={y} r={10} />
+          <motion.circle cx={x} cy={y} r={5} className="fill-blue-500" />
+          <motion.circle
+            cx={x}
+            cy={y}
+            r={10}
+            initial={{
+              fill: "#3b83f622",
+              outline: "1px solid red",
+            }}
+            whileHover={{ r: 14, fill: "#3b83f67a" }}
+          />
         </motion.g>
       </motion.g>
     );

@@ -4,7 +4,8 @@ export const triangleDrawPrompt = {
   name: "draw_shape",
   description: `\
   Get the current paramaters for drawing a 2D geometric shape. The shape will be drawn on the screen.
-  Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave padding.`,
+  Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave padding.
+  Don't nessessarily add all the parameters (points, angles, corners, etc..) you can add one if you want. Try to keep it simple at first.`,
   parameters: z.object({
     points: z
       .string()
