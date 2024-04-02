@@ -8,11 +8,11 @@ import { CopyIcon } from "@radix-ui/react-icons";
 import { z } from "zod";
 import { AI } from "@/app/action";
 import { useAIState } from "ai/rsc";
-import { triangleDrawPrompt } from "@/app/ai-function-prompts";
+import { polygonDrawPrompt } from "@/app/ai-function-prompts";
 
-type Props = z.infer<(typeof triangleDrawPrompt)["parameters"]>;
+type Props = z.infer<(typeof polygonDrawPrompt)["parameters"]>;
 
-export function Triangle(props: Props) {
+export function Polygon(props: Props) {
   const [points, setPoints] = useState(
     () =>
       props.points
@@ -216,10 +216,10 @@ function Interactions({
             const queryParams = new URLSearchParams(params);
             setCopyLabel(true);
             if (ev.metaKey)
-              return window.open(`/triangle.svg?${queryParams}`, "_blank");
+              return window.open(`/polygon.svg?${queryParams}`, "_blank");
             // const getBaseUrl = () =>
             //   `${window.location.protocol}//${window.location.host}`;
-            const url = `/geometry/triangle.svg?${queryParams}`;
+            const url = `/geometry/polygon.svg?${queryParams}`;
             const md = `![Image](${url})`;
             navigator.clipboard.writeText(md);
           }}

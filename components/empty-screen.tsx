@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { IconArrowRight } from "@/components/ui/icons";
-import { Triangle } from "./triangle";
+import { Polygon } from "./polygon";
 
 const exampleMessages = [
   "Draw a triangle.",
@@ -35,10 +35,10 @@ export function EmptyScreen({
             </Button>
           ))}
         </div>
-        <Triangle points="50,150 250,50 250,150" corners={["A", "B", "C"]} />
-        <Triangle points="50,150 250,50 250,150" angles={["x", true, true]} />
-        <Triangle points="50,150 250,50 250,150" sides={["a", "b", "c"]} />
-        <Triangle
+        <Polygon points="50,150 250,50 250,150" corners={["A", "B", "C"]} />
+        <Polygon points="50,150 250,50 250,150" angles={["x", true, true]} />
+        <Polygon points="50,150 250,50 250,150" sides={["a", "b", "c"]} />
+        <Polygon
           points="50,150 250,50 250,150"
           angles={[false, false, true]}
           sides={["hüpotenuus", false, false]}

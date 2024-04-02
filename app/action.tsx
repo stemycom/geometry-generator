@@ -11,8 +11,8 @@ import {
   formatNumber,
   runOpenAICompletion,
 } from "@/lib/utils";
-import { Triangle } from "@/components/triangle";
-import { triangleDrawPrompt } from "./ai-function-prompts";
+import { Polygon } from "@/components/polygon";
+import { polygonDrawPrompt } from "./ai-function-prompts";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -121,7 +121,7 @@ Messages inside [] means that it's a UI element or a user event. For example:
         name: info.name,
       })),
     ],
-    functions: [triangleDrawPrompt],
+    functions: [polygonDrawPrompt],
     temperature: 0.1,
   });
 
@@ -136,7 +136,7 @@ Messages inside [] means that it's a UI element or a user event. For example:
   completion.onFunctionCall("draw_shape", async (props) => {
     reply.done(
       <div className="flex">
-        <Triangle {...props} />
+        <Polygon {...props} />
         <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
       </div>
     );

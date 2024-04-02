@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const triangleDrawPrompt = {
+export const polygonDrawPrompt = {
   name: "draw_shape",
   description: `\
   Get the current paramaters for drawing a 2D geometric shape. The shape will be drawn on the screen.

@@ -1,4 +1,4 @@
-import { Triangle } from "@/components/triangle";
+import { Polygon } from "@/components/polygon";
 import type { NextApiRequest, NextApiResponse } from "next";
 import ReactDOMServer from "react-dom/server";
 
@@ -14,7 +14,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       .map(safeParseJson),
   };
 
-  const markup = ReactDOMServer.renderToStaticMarkup(<Triangle {...props} />);
+  const markup = ReactDOMServer.renderToStaticMarkup(<Polygon {...props} />);
 
   res.setHeader("Content-Type", "image/svg+xml");
   return res.status(200).send(markup);
