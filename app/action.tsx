@@ -12,7 +12,7 @@ import {
   runOpenAICompletion,
 } from "@/lib/utils";
 import { Polygon } from "@/components/polygon";
-import { polygonDrawPrompt } from "./ai-function-prompts";
+import { polygonDrawPrompt, drawCylinder } from "./ai-function-prompts";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -121,7 +121,7 @@ Messages inside [] means that it's a UI element or a user event. For example:
         name: info.name,
       })),
     ],
-    functions: [polygonDrawPrompt],
+    functions: [polygonDrawPrompt, drawCylinder],
     temperature: 0.1,
   });
 
@@ -146,6 +146,36 @@ Messages inside [] means that it's a UI element or a user event. For example:
       {
         role: "function",
         name: "draw_shape",
+        content: JSON.stringify(props),
+      },
+    ]);
+  });
+
+  completion.onFunctionCall("draw_cylinder", async (props) => {
+    const { lines, ellipses } = props;
+
+    reply.done(
+      <div>
+        <svg width="300" height="200">
+          {/* {paths?.map((path) => (
+            <path d={path} stroke="black" strokeWidth="2" fill="none" />
+          ))} */}
+          {ellipses?.map((ellipse) => (
+            <ellipse {...ellipse} stroke="black" strokeWidth="2" fill="none" />
+          ))}
+          {lines?.map((side) => (
+            <line {...side} stroke="black" strokeWidth="2" />
+          ))}
+        </svg>
+        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
+      </div>
+    );
+
+    aiState.done([
+      ...aiState.get(),
+      {
+        role: "function",
+        name: "draw_solid_geometry",
         content: JSON.stringify(props),
       },
     ]);
