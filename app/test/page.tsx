@@ -1,7 +1,7 @@
 "use client";
 
 import { OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Camera, Canvas, useFrame } from "@react-three/fiber";
 import { SVGTextElementAttributes, useRef, useState } from "react";
 import { Vector3, type Mesh } from "three";
 import { SVGRenderer } from "three-stdlib";
@@ -56,16 +56,40 @@ function Shape() {
       "http://www.w3.org/2000/svg",
       "polygon"
     );
-    el.setAttribute("fill", "rgba(0,0,255,0.5)");
+    el.setAttribute("stroke", "rgba(0,0,255,0.5)");
+    el.setAttribute("fill", "rgba(0,0,255,0.1)");
+    el.setAttribute("stroke-width", "2");
     customFace.current = el;
     root.appendChild(el);
   }
-  function updateFace(points: Point[]) {
+  function updateFace(points: Point[], camera: Camera, mesh: Mesh) {
     const [p1, p2, p3, p4] = points;
     customFace.current!.setAttribute(
       "points",
       [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ")
     );
+    //update look based on backface visibility
+    const normal = new Vector3();
+    const a = new Vector3();
+    const b = new Vector3();
+    const c = new Vector3();
+    a.fromBufferAttribute(mesh.geometry.attributes.position, 0);
+    b.fromBufferAttribute(mesh.geometry.attributes.position, 1);
+    c.fromBufferAttribute(mesh.geometry.attributes.position, 2);
+    normal.crossVectors(b.sub(a), c.sub(a)).normalize();
+    const cameraDirection = new Vector3();
+    camera.getWorldDirection(cameraDirection);
+    const dot = normal.dot(cameraDirection);
+    const flipped = dot < 0;
+    if (flipped) {
+      customFace.current!.setAttribute("stroke-dasharray", "8,8");
+      customFace.current!.setAttribute("stroke", "rgba(0,0,0,0.25)");
+      customFace.current!.setAttribute("fill", "rgba(148,163,184,0.1)");
+    } else {
+      customFace.current!.setAttribute("stroke-dasharray", "0");
+      customFace.current!.setAttribute("stroke", "black");
+      customFace.current!.setAttribute("fill", "rgba(0,0,0,0)");
+    }
   }
 
   const customCircle = useRef<SVGCircleElement>(null!);
@@ -102,7 +126,7 @@ function Shape() {
     const vertex = new Vector3();
 
     if (!verts.current)
-      setupVerts(gl.domElement as unknown as SVGSVGElement, 6);
+      setupVerts(gl.domElement as unknown as SVGSVGElement, 8);
 
     const { matrixWorld } = mesh;
 
@@ -128,9 +152,9 @@ function Shape() {
       vertPositions.push({ x, y });
       // console.log(`Vertex ${i} screen position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
     }
-    updateVerts([...vertPositions].slice(0, 6));
-    updateFace(vertPositions);
-    updateWireframe(vertPositions);
+    updateVerts([...vertPositions].slice(0, 8));
+    updateFace(vertPositions, camera, mesh);
+    // updateWireframe(vertPositions);
   }, 2);
 
   return (
@@ -166,18 +190,4 @@ export default function () {
   );
 }
 
-function avgPoint(point1: Point, point2: Point, t = 0.5): Point {
-  return {
-    x: point1.x + t * (point2.x - point1.x),
-    y: point1.y + t * (point2.y - point1.y),
-  };
-}
-
 type Point = { x: number; y: number };
-
-function averagePoints(point1: Point, point2: Point): Point {
-  return {
-    x: (point1.x + point2.x) / 2,
-    y: (point1.y + point2.y) / 2,
-  };
-}
