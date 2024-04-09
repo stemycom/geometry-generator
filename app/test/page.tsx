@@ -50,47 +50,86 @@ function Shape() {
     );
   }
 
-  const customFace = useRef<SVGPolygonElement>(null!);
-  function setupFace(root: SVGSVGElement) {
-    const el = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "polygon"
-    );
-    el.setAttribute("stroke", "rgba(0,0,255,0.5)");
-    el.setAttribute("fill", "rgba(0,0,255,0.1)");
-    el.setAttribute("stroke-width", "2");
-    customFace.current = el;
-    root.appendChild(el);
+  const customFaces = useRef<SVGPolygonElement[]>(null!);
+  function setupFaces(root: SVGSVGElement) {
+    const length = 6;
+    const els = Array.from({ length }, () => {
+      const el = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polygon"
+      );
+      el.setAttribute("stroke", "black");
+      el.setAttribute("stroke-width", "2");
+      el.setAttribute("fill", "none");
+      root.appendChild(el);
+      return el;
+    });
+    customFaces.current = els;
   }
-  function updateFace(points: Point[], camera: Camera, mesh: Mesh) {
-    const [p1, p2, p3, p4] = points;
-    customFace.current!.setAttribute(
-      "points",
-      [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ")
-    );
-    //update look based on backface visibility
-    const normal = new Vector3();
-    const a = new Vector3();
-    const b = new Vector3();
-    const c = new Vector3();
-    a.fromBufferAttribute(mesh.geometry.attributes.position, 0);
-    b.fromBufferAttribute(mesh.geometry.attributes.position, 1);
-    c.fromBufferAttribute(mesh.geometry.attributes.position, 2);
-    normal.crossVectors(b.sub(a), c.sub(a)).normalize();
-    const cameraDirection = new Vector3();
-    camera.getWorldDirection(cameraDirection);
-    const dot = normal.dot(cameraDirection);
-    const flipped = dot < 0;
-    if (flipped) {
-      customFace.current!.setAttribute("stroke-dasharray", "8,8");
-      customFace.current!.setAttribute("stroke", "rgba(0,0,0,0.25)");
-      customFace.current!.setAttribute("fill", "rgba(148,163,184,0.1)");
-    } else {
-      customFace.current!.setAttribute("stroke-dasharray", "0");
-      customFace.current!.setAttribute("stroke", "black");
-      customFace.current!.setAttribute("fill", "rgba(0,0,0,0)");
-    }
+  function updateFaces(points: Point[], camera: Camera, mesh: Mesh) {
+    const faces = customFaces.current;
+    faces.forEach((face, i) => {
+      const [p1, p2, p3, p4] = points.slice(i * 4, i * 4 + 4);
+      face.setAttribute(
+        "points",
+        [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ")
+      );
+      //update look based on backface visibility
+      const normal = new Vector3();
+      const a = new Vector3();
+      const b = new Vector3();
+      const c = new Vector3();
+
+      const index = i * 4;
+      a.fromBufferAttribute(mesh.geometry.attributes.position, index);
+      b.fromBufferAttribute(mesh.geometry.attributes.position, index + 1);
+      c.fromBufferAttribute(mesh.geometry.attributes.position, index + 2);
+
+      normal.crossVectors(b.sub(a), c.sub(a)).normalize();
+      const cameraDirection = new Vector3();
+      camera.getWorldDirection(cameraDirection);
+      const dot = normal.dot(cameraDirection);
+      const flipped = dot < 0;
+      if (flipped) {
+        //face.setAttribute("stroke-dasharray", "8,8");
+        face.setAttribute("stroke", "#94a3b822");
+        face.setAttribute("fill", "rgba(148, 163, 184, 0.10)");
+      } else {
+        //face.setAttribute("stroke-dasharray", "0");
+        face.setAttribute("stroke", "#94a3b8");
+        face.setAttribute("fill", "rgba(0,0,0,0)");
+      }
+    });
   }
+  // function updateFace(points: Point[], camera: Camera, mesh: Mesh) {
+  //   const [p1, p2, p3, p4] = points;
+  //   customFace.current!.setAttribute(
+  //     "points",
+  //     [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ")
+  //   );
+  //   //update look based on backface visibility
+  //   const normal = new Vector3();
+  //   const a = new Vector3();
+  //   const b = new Vector3();
+  //   const c = new Vector3();
+  //   a.fromBufferAttribute(mesh.geometry.attributes.position, 0);
+  //   b.fromBufferAttribute(mesh.geometry.attributes.position, 1);
+  //   c.fromBufferAttribute(mesh.geometry.attributes.position, 2);
+  //   normal.crossVectors(b.sub(a), c.sub(a)).normalize();
+  //   const cameraDirection = new Vector3();
+  //   camera.getWorldDirection(cameraDirection);
+  //   const dot = normal.dot(cameraDirection);
+  //   const flipped = dot < 0;
+  //   if (flipped) {
+  //     customFace.current!.setAttribute("stroke-dasharray", "8,8");
+  //     customFace.current!.setAttribute("stroke", "rgba(0,0,0,0.25)");
+  //     customFace.current!.setAttribute("fill", "rgba(148,163,184,0.1)");
+  //   } else {
+  //     customFace.current!.setAttribute("stroke-dasharray", "0");
+  //     customFace.current!.setAttribute("stroke", "black");
+  //     customFace.current!.setAttribute("fill", "rgba(0,0,0,0)");
+  //   }
+  // }
 
   const customCircle = useRef<SVGCircleElement>(null!);
   function setupCircle(root: SVGSVGElement) {
@@ -116,8 +155,8 @@ function Shape() {
 
     if (!customCircle.current)
       setupCircle(gl.domElement as unknown as SVGSVGElement);
-    if (!customFace.current)
-      setupFace(gl.domElement as unknown as SVGSVGElement);
+    if (!customFaces.current)
+      setupFaces(gl.domElement as unknown as SVGSVGElement);
     if (!wireframe.current)
       setupWireframe(gl.domElement as unknown as SVGSVGElement);
 
@@ -153,7 +192,7 @@ function Shape() {
       // console.log(`Vertex ${i} screen position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
     }
     updateVerts([...vertPositions].slice(0, 8));
-    updateFace(vertPositions, camera, mesh);
+    updateFaces(vertPositions, camera, mesh);
     // updateWireframe(vertPositions);
   }, 2);
 
