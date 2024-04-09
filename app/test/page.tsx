@@ -2,7 +2,7 @@
 
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef, useState } from "react";
+import { SVGTextElementAttributes, useRef, useState } from "react";
 import { Vector3, type Mesh } from "three";
 import { SVGRenderer } from "three-stdlib";
 
@@ -10,13 +10,36 @@ function Shape() {
   const ref = useRef<Mesh>(null);
   const [hovered, set] = useState(false);
 
+  const verts = useRef<SVGTextElement[]>(null!);
+  function setupVerts(root: SVGSVGElement, length: number) {
+    const els = Array.from({ length }, () => {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      el.setAttribute("font-size", "20");
+      el.setAttribute("fill", "red");
+      root.appendChild(el);
+      return el;
+    });
+    verts.current = els;
+  }
+  function updateVerts(points: Point[]) {
+    points.forEach(({ x, y }, i) => {
+      const el = verts.current[i];
+      el.setAttribute("x", x.toString());
+      el.setAttribute("y", y.toString());
+      el.textContent = i.toString();
+      // el.textContent = String.fromCharCode(65 + i);
+    });
+  }
+
   const wireframe = useRef<SVGPolygonElement>(null!);
   function setupWireframe(root: SVGSVGElement) {
     const el = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "polygon"
     );
-    el.setAttribute("fill", "rgba(0,0,255,0.5)");
+    el.setAttribute("stroke", "black");
+    el.setAttribute("stroke-width", "2");
+    el.setAttribute("fill", "none");
     wireframe.current = el;
     root.appendChild(el);
   }
@@ -33,16 +56,15 @@ function Shape() {
       "http://www.w3.org/2000/svg",
       "polygon"
     );
-    el.setAttribute("stroke", "black");
-    el.setAttribute("stroke-width", "2");
-    el.setAttribute("fill", "none");
+    el.setAttribute("fill", "rgba(0,0,255,0.5)");
     customFace.current = el;
     root.appendChild(el);
   }
   function updateFace(points: Point[]) {
+    const [p1, p2, p3, p4] = points;
     customFace.current!.setAttribute(
       "points",
-      points.map((v) => `${v.x},${v.y}`).join(" ")
+      [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ")
     );
   }
 
@@ -79,6 +101,9 @@ function Shape() {
     const positionAttr = geometry.attributes.position;
     const vertex = new Vector3();
 
+    if (!verts.current)
+      setupVerts(gl.domElement as unknown as SVGSVGElement, 6);
+
     const { matrixWorld } = mesh;
 
     const vertPositions = [];
@@ -103,6 +128,7 @@ function Shape() {
       vertPositions.push({ x, y });
       // console.log(`Vertex ${i} screen position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
     }
+    updateVerts([...vertPositions].slice(0, 6));
     updateFace(vertPositions);
     updateWireframe(vertPositions);
   }, 2);
