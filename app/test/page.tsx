@@ -49,30 +49,42 @@ function Cone() {
     );
   }
 
-  const ellipse = useRef<SVGEllipseElement>(null!);
-  function setupEllipse(root: SVGSVGElement) {
-    const el = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "ellipse"
-    );
+  const bottomPath = useRef<SVGPathElement>(null!);
+  function setupBottomPath(root: SVGSVGElement) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", "path");
     el.setAttribute("stroke", "red");
     el.setAttribute("stroke-width", "3");
     el.setAttribute("fill", "none");
     root.appendChild(el);
-    ellipse.current = el;
-    return ellipse;
+    bottomPath.current = el;
+    return bottomPath;
   }
-  function updateEllipse(points: Point[]) {
-    const el = ellipse.current!;
-    const [p1, p2, p3] = points;
-    const cx = p1.x;
-    const cy = p1.y;
-    const rx = Math.abs(p3.x - p1.x);
-    const ry = Math.abs(p3.y - p1.y);
-    el.setAttribute("cx", cx.toString());
-    el.setAttribute("cy", cy.toString());
-    el.setAttribute("rx", rx.toString());
-    el.setAttribute("ry", ry.toString());
+  function updateBottomPath(points: Point[]) {
+    const el = bottomPath.current!;
+    const [p0, p1, p2, p3, p4, p5] = points;
+    const edges = [
+      getCentroid(p1, p2),
+      getCentroid(p2, p3),
+      getCentroid(p3, p4),
+      getCentroid(p4, p1),
+    ];
+    const handleRatio = 0.551915024494;
+    const curves = [
+      moveTowards(edges[0], p2, handleRatio),
+      moveTowards(p2, edges[1], handleRatio),
+      moveTowards(edges[1], p3, handleRatio),
+      moveTowards(p3, edges[2], handleRatio),
+      moveTowards(edges[2], p4, handleRatio),
+      moveTowards(p4, edges[3], handleRatio),
+      moveTowards(edges[3], p1, handleRatio),
+      moveTowards(p1, edges[0], handleRatio),
+    ];
+    const d = `M ${edges[0].x} ${edges[0].y} \n
+C ${curves[0].x} ${curves[0].y} ${curves[1].x} ${curves[1].y} ${edges[1].x} ${edges[1].y} \n
+C ${curves[2].x} ${curves[2].y} ${curves[3].x} ${curves[3].y} ${edges[2].x} ${edges[2].y} \n
+C ${curves[4].x} ${curves[4].y} ${curves[5].x} ${curves[5].y} ${edges[3].x} ${edges[3].y} \n
+C ${curves[6].x} ${curves[6].y} ${curves[7].x} ${curves[7].y} ${edges[0].x} ${edges[0].y} Z`;
+    el.setAttribute("d", d);
   }
 
   useFrame(({ camera, size, gl }) => {
@@ -81,8 +93,7 @@ function Cone() {
 
     const el = gl.domElement as unknown as SVGSVGElement;
     if (!wireframe.current) setupWireframe(el);
-    if (!ellipse.current) setupEllipse(el);
-    if (!verts.current) setupVerts(el, 3);
+    if (!bottomPath.current) setupBottomPath(el);
 
     const geometry = mesh.geometry;
     const positionAttr = geometry.attributes.position;
@@ -108,9 +119,12 @@ function Cone() {
       vertPositions.push({ x, y });
       // console.log(`Vertex ${i} screen position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
     }
-    updateWireframe(vertPositions);
-    updateVerts([...vertPositions].slice(0, 3));
-    updateEllipse(vertPositions);
+    if (!verts.current) setupVerts(el, 6);
+    const pickedVerts = [...[...vertPositions].slice(4, 9), vertPositions[11]];
+    updateVerts(pickedVerts);
+
+    // updateWireframe(pickedVerts);
+    updateBottomPath(pickedVerts);
   }, 1);
 
   return (
@@ -362,3 +376,28 @@ export default function () {
 }
 
 type Point = { x: number; y: number };
+
+function getCentroid(...arr: Point[]): Point {
+  let sumX = 0;
+  let sumY = 0;
+
+  for (let i = 0; i < arr.length; i++) {
+    sumX += arr[i].x;
+    sumY += arr[i].y;
+  }
+
+  let centroidX = sumX / arr.length;
+  let centroidY = sumY / arr.length;
+
+  return { x: centroidX, y: centroidY };
+}
+
+function moveTowards(a: Point, b: Point, distance: number): Point {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const mag = Math.sqrt(dx * dx + dy * dy);
+  return {
+    x: a.x + (dx / mag) * distance,
+    y: a.y + (dy / mag) * distance,
+  };
+}
