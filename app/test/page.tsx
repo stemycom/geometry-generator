@@ -2,9 +2,124 @@
 
 import { OrbitControls } from "@react-three/drei";
 import { Camera, Canvas, useFrame } from "@react-three/fiber";
-import { SVGTextElementAttributes, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Vector3, type Mesh } from "three";
 import { SVGRenderer } from "three-stdlib";
+
+function Cone() {
+  const ref = useRef<Mesh>(null);
+
+  const verts = useRef<SVGTextElement[]>(null!);
+  function setupVerts(root: SVGSVGElement, length: number) {
+    const els = Array.from({ length }, () => {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      el.setAttribute("font-size", "20");
+      el.setAttribute("fill", "red");
+      root.appendChild(el);
+      return el;
+    });
+    verts.current = els;
+  }
+  function updateVerts(points: Point[]) {
+    points.forEach(({ x, y }, i) => {
+      const el = verts.current[i];
+      el.setAttribute("x", x.toString());
+      el.setAttribute("y", y.toString());
+      el.textContent = i.toString();
+      // el.textContent = String.fromCharCode(65 + i);
+    });
+  }
+
+  const wireframe = useRef<SVGPolygonElement>(null!);
+  function setupWireframe(root: SVGSVGElement) {
+    const el = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "polygon"
+    );
+    el.setAttribute("stroke", "black");
+    el.setAttribute("stroke-width", "2");
+    el.setAttribute("fill", "none");
+    wireframe.current = el;
+    root.appendChild(el);
+  }
+  function updateWireframe(points: Point[]) {
+    wireframe.current!.setAttribute(
+      "points",
+      points.map((v) => `${v.x},${v.y}`).join(" ")
+    );
+  }
+
+  const ellipse = useRef<SVGEllipseElement>(null!);
+  function setupEllipse(root: SVGSVGElement) {
+    const el = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "ellipse"
+    );
+    el.setAttribute("stroke", "red");
+    el.setAttribute("stroke-width", "3");
+    el.setAttribute("fill", "none");
+    root.appendChild(el);
+    ellipse.current = el;
+    return ellipse;
+  }
+  function updateEllipse(points: Point[]) {
+    const el = ellipse.current!;
+    const [p1, p2, p3] = points;
+    const cx = p1.x;
+    const cy = p1.y;
+    const rx = Math.abs(p3.x - p1.x);
+    const ry = Math.abs(p3.y - p1.y);
+    el.setAttribute("cx", cx.toString());
+    el.setAttribute("cy", cy.toString());
+    el.setAttribute("rx", rx.toString());
+    el.setAttribute("ry", ry.toString());
+  }
+
+  useFrame(({ camera, size, gl }) => {
+    const mesh = ref.current!;
+    if (!mesh) return;
+
+    const el = gl.domElement as unknown as SVGSVGElement;
+    if (!wireframe.current) setupWireframe(el);
+    if (!ellipse.current) setupEllipse(el);
+    if (!verts.current) setupVerts(el, 3);
+
+    const geometry = mesh.geometry;
+    const positionAttr = geometry.attributes.position;
+    const vertex = new Vector3();
+
+    const { matrixWorld } = mesh;
+
+    const vertPositions = [];
+    for (let i = 0; i < positionAttr.count; i++) {
+      // Get each vertex from the geometry
+      vertex.fromBufferAttribute(positionAttr, i);
+
+      // Apply the mesh's world matrix to the vertex to take into account its global position, rotation, and scale
+      vertex.applyMatrix4(matrixWorld);
+
+      // Now, project this world position to NDC
+      vertex.project(camera);
+
+      const x = vertex.x * 0.5 * size.width;
+      const y = -vertex.y * 0.5 * size.height;
+
+      // vertPositions.push({ x: +x.toPrecision(2), y: +y.toPrecision(2) });
+      vertPositions.push({ x, y });
+      // console.log(`Vertex ${i} screen position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
+    }
+    updateWireframe(vertPositions);
+    updateVerts([...vertPositions].slice(0, 3));
+    updateEllipse(vertPositions);
+  }, 1);
+
+  return (
+    <mesh ref={ref}>
+      <coneGeometry args={[1, 1.5, 4]} />
+      <meshStandardMaterial opacity={0.1} />
+    </mesh>
+  );
+}
 
 function Shape() {
   const ref = useRef<Mesh>(null);
@@ -216,6 +331,23 @@ export default function () {
         camera={{ position: [1, 1, 1.5], zoom: 200 }}
         gl={(canvas) => {
           const gl = new SVGRenderer();
+          //@ts-ignore
+          const parent = canvas.parentNode;
+          parent.removeChild(canvas);
+          parent.appendChild(gl.domElement);
+          return gl;
+        }}
+      >
+        <OrbitControls />
+        {/* <Shape /> */}
+        <Cone />
+      </Canvas>
+      <Canvas
+        orthographic
+        camera={{ position: [1, 1, 1.5], zoom: 200 }}
+        gl={(canvas) => {
+          const gl = new SVGRenderer();
+          //@ts-ignore
           const parent = canvas.parentNode;
           parent.removeChild(canvas);
           parent.appendChild(gl.domElement);
