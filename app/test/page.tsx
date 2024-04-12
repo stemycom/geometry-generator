@@ -1,3 +1,5 @@
+"use client";
+
 import { OrbitControls } from "@react-three/drei";
 import { Camera, Canvas, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
@@ -406,7 +408,7 @@ function Shape() {
   );
 }
 
-export default function () {
+export default function Page() {
   console.log("<Page /> rendered");
   return (
     <div className="w-full max-w-96 aspect-square bg-white">
