@@ -1,13 +1,52 @@
-"use client";
-
 import { OrbitControls } from "@react-three/drei";
 import { Camera, Canvas, useFrame } from "@react-three/fiber";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Vector3, type Mesh } from "three";
 import { SVGRenderer } from "three-stdlib";
 
 function Cone() {
   const ref = useRef<Mesh>(null);
+
+  const customFace = useRef<SVGPolygonElement>(null!);
+  function setupFace(root: SVGSVGElement) {
+    const face = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "polygon"
+    );
+    //face.setAttribute("fill", "rgba(255,0,0,0.4)");
+    face.setAttribute("stroke", "blue");
+    face.setAttribute("stroke-width", "2");
+    face.setAttribute("fill", "none");
+    customFace.current = face;
+    root.appendChild(face);
+  }
+  function updateFace(points: Point[], camera: Camera, mesh: Mesh) {
+    const [apex, ...bottomPoints] = points;
+    //update look based on backface visibility
+    const normal = new Vector3();
+    const a = new Vector3();
+    const b = new Vector3();
+    const c = new Vector3();
+
+    let verts = [apex];
+    for (let i = 0; i < bottomPoints.length; i++) {
+      if (i % 2 || verts.length > 3) continue;
+      a.fromBufferAttribute(mesh.geometry.attributes.position, 64 + i);
+      b.fromBufferAttribute(mesh.geometry.attributes.position, 64 + i + 1);
+      c.fromBufferAttribute(mesh.geometry.attributes.position, 64 + i + 2);
+
+      normal.crossVectors(b.sub(a), c.sub(a)).normalize();
+      const cameraDirection = new Vector3();
+      camera.getWorldDirection(cameraDirection);
+      const dot = normal.dot(cameraDirection);
+      const flipped = dot < 0;
+      if (flipped) verts.push(bottomPoints[i]);
+    }
+    customFace.current!.setAttribute(
+      "points",
+      verts.map((v) => `${v.x},${v.y}`).join(" ")
+    );
+  }
 
   const verts = useRef<SVGTextElement[]>(null!);
   function setupVerts(root: SVGSVGElement, length: number) {
@@ -26,7 +65,6 @@ function Cone() {
       el.setAttribute("x", x.toString());
       el.setAttribute("y", y.toString());
       el.textContent = i.toString();
-      // el.textContent = String.fromCharCode(65 + i);
     });
   }
 
@@ -44,6 +82,25 @@ function Cone() {
   }
   function updateWireframe(points: Point[]) {
     wireframe.current!.setAttribute(
+      "points",
+      points.map((v) => `${v.x},${v.y}`).join(" ")
+    );
+  }
+
+  const topCone = useRef<SVGPolylineElement>(null!);
+  function setupTopCone(root: SVGSVGElement) {
+    const el = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "polyline"
+    );
+    el.setAttribute("stroke", "blue");
+    el.setAttribute("stroke-width", "2");
+    el.setAttribute("fill", "none");
+    topCone.current = el;
+    root.appendChild(el);
+  }
+  function updateTopCone(points: Point[]) {
+    topCone.current!.setAttribute(
       "points",
       points.map((v) => `${v.x},${v.y}`).join(" ")
     );
@@ -68,15 +125,15 @@ function Cone() {
       getCentroid(p3, p4),
       getCentroid(p4, p1),
     ];
-    const handleRatio = 0.551915024494;
+    const handleRatio = 0.552284749831;
     const curves = [
-      moveTowards(edges[0], p2, handleRatio),
+      moveTowards(edges[0], p2, 1 - handleRatio),
       moveTowards(p2, edges[1], handleRatio),
-      moveTowards(edges[1], p3, handleRatio),
+      moveTowards(edges[1], p3, 1 - handleRatio),
       moveTowards(p3, edges[2], handleRatio),
-      moveTowards(edges[2], p4, handleRatio),
+      moveTowards(edges[2], p4, 1 - handleRatio),
       moveTowards(p4, edges[3], handleRatio),
-      moveTowards(edges[3], p1, handleRatio),
+      moveTowards(edges[3], p1, 1 - handleRatio),
       moveTowards(p1, edges[0], handleRatio),
     ];
     const d = `M ${edges[0].x} ${edges[0].y} \n
@@ -84,7 +141,9 @@ C ${curves[0].x} ${curves[0].y} ${curves[1].x} ${curves[1].y} ${edges[1].x} ${ed
 C ${curves[2].x} ${curves[2].y} ${curves[3].x} ${curves[3].y} ${edges[2].x} ${edges[2].y} \n
 C ${curves[4].x} ${curves[4].y} ${curves[5].x} ${curves[5].y} ${edges[3].x} ${edges[3].y} \n
 C ${curves[6].x} ${curves[6].y} ${curves[7].x} ${curves[7].y} ${edges[0].x} ${edges[0].y} Z`;
+
     el.setAttribute("d", d);
+    return d;
   }
 
   useFrame(({ camera, size, gl }) => {
@@ -94,6 +153,7 @@ C ${curves[6].x} ${curves[6].y} ${curves[7].x} ${curves[7].y} ${edges[0].x} ${ed
     const el = gl.domElement as unknown as SVGSVGElement;
     if (!wireframe.current) setupWireframe(el);
     if (!bottomPath.current) setupBottomPath(el);
+    if (!topCone.current) setupTopCone(el);
 
     const geometry = mesh.geometry;
     const positionAttr = geometry.attributes.position;
@@ -119,17 +179,29 @@ C ${curves[6].x} ${curves[6].y} ${curves[7].x} ${curves[7].y} ${edges[0].x} ${ed
       vertPositions.push({ x, y });
       // console.log(`Vertex ${i} screen position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
     }
-    if (!verts.current) setupVerts(el, 6);
-    const pickedVerts = [...[...vertPositions].slice(4, 9), vertPositions[11]];
-    updateVerts(pickedVerts);
+    if (!verts.current) setupVerts(el, positionAttr.count);
+    if (!customFace.current) setupFace(el);
 
-    // updateWireframe(pickedVerts);
+    const pickedVerts = [...[...vertPositions].slice(4, 9), vertPositions[11]];
+    const picked2 = [...vertPositions].slice(64, 64 + 66);
+    updateFace(picked2, camera, mesh);
+    // updateVerts(pickedVerts);
+
+    updateWireframe(vertPositions);
+    updateVerts(picked2);
     updateBottomPath(pickedVerts);
+    const bbox = bottomPath.current.getBBox();
+    const extremes = [
+      { x: bbox.x, y: bbox.y + bbox.height / 2 },
+      { x: bbox.x + bbox.width, y: bbox.y + bbox.height / 2 },
+    ];
+
+    updateTopCone([extremes[0], vertPositions[4], extremes[1]]);
   }, 1);
 
   return (
     <mesh ref={ref}>
-      <coneGeometry args={[1, 1.5, 4]} />
+      <coneGeometry args={[1, 1.5, 64]} />
       <meshStandardMaterial opacity={0.1} />
     </mesh>
   );
@@ -137,7 +209,6 @@ C ${curves[6].x} ${curves[6].y} ${curves[7].x} ${curves[7].y} ${edges[0].x} ${ed
 
 function Shape() {
   const ref = useRef<Mesh>(null);
-  const [hovered, set] = useState(false);
 
   const verts = useRef<SVGTextElement[]>(null!);
   function setupVerts(root: SVGSVGElement, length: number) {
@@ -325,12 +396,10 @@ function Shape() {
     // updateWireframe(vertPositions);
   }, 2);
 
+  console.log("<Shape /> rendered");
+
   return (
-    <mesh
-      ref={ref}
-      onPointerOver={() => set(true)}
-      onPointerOut={() => set(false)}
-    >
+    <mesh ref={ref}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial opacity={0.1} />
     </mesh>
@@ -338,6 +407,7 @@ function Shape() {
 }
 
 export default function () {
+  console.log("<Page /> rendered");
   return (
     <div className="w-full max-w-96 aspect-square bg-white">
       <Canvas
