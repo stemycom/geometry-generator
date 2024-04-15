@@ -1,41 +1,56 @@
+"use client";
+
 import * as THREE from "three";
+import { Interactive } from "./interactive";
+import { createRef, useEffect, useState } from "react";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const size = { width: 300, height: 200 };
 
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
 camera.zoom = 200;
+//camera rotation for isometric grid
+camera.position.set(1, 0.5, -0.5);
+camera.lookAt(0, 0, 0);
 
 const geometry = new THREE.BoxGeometry(1, 1, 1);
-geometry.rotateY(0.5);
-geometry.rotateX(0.5);
 
 const cube = new THREE.Mesh(geometry);
 scene.add(cube);
 
-const positionAttr = cube.geometry.attributes.position;
-
-const vertex = new THREE.Vector3();
-
 const vertPositions: Point[] = [];
-for (let i = 0; i < positionAttr.count; i++) {
-  vertex.fromBufferAttribute(positionAttr, i);
+updateVertPositions();
+function updateVertPositions() {
+  const positionAttr = cube.geometry.attributes.position;
 
-  vertex.applyMatrix4(cube.matrixWorld);
-  vertex.project(camera);
+  const vertex = new THREE.Vector3();
 
-  const x = vertex.x * 0.5 * size.height;
-  const y = -vertex.y * 0.5 * size.height;
+  vertPositions.length = 0;
+  for (let i = 0; i < positionAttr.count; i++) {
+    vertex.fromBufferAttribute(positionAttr, i);
 
-  vertPositions.push({ x, y });
+    vertex.applyMatrix4(cube.matrixWorld);
+    vertex.project(camera);
+
+    const x = vertex.x * 0.5 * size.height;
+    const y = -vertex.y * 0.5 * size.height;
+
+    vertPositions.push({ x, y });
+  }
 }
 
-function Cube() {
+function Cube({ update }: { update: number }) {
   const path = vertPositions.map(({ x, y }) => `${x},${y}`).join(" ");
   const length = 6;
 
+  updateVertPositions();
+
   return (
     <g>
+      <text x={0} y={0} fontSize={10} textAnchor="middle">
+        {update}
+      </text>
       {/* <path d={`M${path}Z`} fill="none" stroke="black" /> */}
       {Array.from({ length }, (_, i) => {
         const [p1, p2, p3, p4] = vertPositions.slice(i * 4, i * 4 + 4);
@@ -74,16 +89,43 @@ function Cube() {
 }
 
 export default function Page() {
+  const svgRef = createRef<SVGSVGElement>();
+  const [update, setUpdate] = useState(0);
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const controls = new OrbitControls(
+      camera,
+      svgRef.current as unknown as HTMLElement
+    );
+    controls.enableDamping = true;
+    const animate = () => {
+      controls.update();
+      setUpdate((u) => u + 1);
+      requestAnimationFrame(animate);
+      console.log("animate");
+    };
+    animate();
+    console.log("setting up OrbitControls");
+  }, []);
+
   return (
-    <div className="w-full max-w-96 aspect-square bg-white">
+    <div className="grid">
       <svg
+        ref={svgRef}
+        className="w-full max-w-96 aspect-square bg-white [grid-area:1/1]"
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
-        <Cube />
+        <Cube update={update} />
       </svg>
-      <pre className="text-xs">{JSON.stringify(vertPositions, null, 2)}</pre>
+      {/* <Interactive /> */}
+      {/* <pre className="text-xs">{JSON.stringify(vertPositions, null, 2)}</pre> */}
+      <pre className="text-xs">{JSON.stringify(camera.position, null, 2)}</pre>
     </div>
   );
 }
 
-type Point = { x: number; y: number };
+type Point = {
+  x: number;
+  y: number;
+};
