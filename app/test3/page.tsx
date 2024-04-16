@@ -1,8 +1,8 @@
 "use client";
 
-import { OrbitControls } from "@react-three/drei";
 import { Camera, Canvas, RootState, useFrame } from "@react-three/fiber";
 import {
+  forwardRef,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -11,24 +11,10 @@ import {
 } from "react";
 import * as THREE from "three";
 import { SVGRenderer } from "three-stdlib";
-
-const size = { width: 200, height: 200 };
-
-function Shape({
-  onUpdate,
-}: {
-  onUpdate: (arg: { state: RootState; mesh: THREE.Mesh }) => void;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null!);
-  useFrame((state) => onUpdate({ state, mesh: meshRef.current! }));
-
-  return (
-    <mesh ref={meshRef}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial opacity={0.1} />
-    </mesh>
-  );
-}
+import { motion } from "framer-motion";
+import { createContext } from "react";
+import { MotionValue, useMotionValue } from "framer-motion";
+import { OrbitControls } from "@react-three/drei";
 
 export default function Page() {
   return (
@@ -38,31 +24,54 @@ export default function Page() {
   );
 }
 
-import { createContext } from "react";
-import { MotionValue, useMotionValue } from "framer-motion";
+const size = { width: 200, height: 200 };
 
-const CanvasContext = createContext<{ cuboid: MotionValue<Point[]> }>({
-  cuboid: new MotionValue(),
+const Shape = forwardRef<
+  THREE.Mesh,
+  {
+    onUpdate: (arg: { state: RootState }) => void;
+  }
+>(({ onUpdate }, meshRef) => {
+  useFrame((state) => {
+    onUpdate({ state });
+    // if (!meshRef) return;
+    // //@ts-ignore
+    // const mesh = meshRef.current as THREE.Mesh;
+  }, 1);
+
+  return (
+    <mesh ref={meshRef}>
+      <boxGeometry args={[1, 1, 1]} />
+    </mesh>
+  );
 });
+
+const CanvasContext = createContext<{
+  cuboid: {
+    vertices: MotionValue<Point[]>;
+    mesh: React.MutableRefObject<THREE.Mesh>;
+  };
+}>(null!);
 
 function Geometry({ size = { width: 300, height: 200 } }) {
   const [hydrated, setHydrated] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null!);
   const initialVertices = getInitialVertices();
   const vertices = useMotionValue(initialVertices);
+  const meshRef = useRef<THREE.Mesh>(null!);
 
   useLayoutEffect(() => {
     setHydrated(true);
   }, []);
 
   return (
-    <CanvasContext.Provider value={{ cuboid: vertices }}>
+    <CanvasContext.Provider value={{ cuboid: { vertices, mesh: meshRef } }}>
       {hydrated && (
         <Canvas
           style={{ display: !hydrated ? "none" : "block" }}
           orthographic
           camera={{ position: [1, 1, 1.5], zoom: 200 }}
-          frameloop="demand"
+          //frameloop="demand"
           gl={(canvas) => {
             const gl = new SVGRenderer();
             gl.domElement = svgRef.current;
@@ -73,11 +82,11 @@ function Geometry({ size = { width: 300, height: 200 } }) {
             return gl;
           }}
         >
-          <OrbitControls />
+          <OrbitControls enabled />
           <Shape
-            onUpdate={({ state: { camera }, mesh }) => {
-              console.log({ ...camera });
-              const verts = getVertPositions({ camera, mesh });
+            ref={meshRef}
+            onUpdate={({ state: { camera } }) => {
+              const verts = getVertPositions({ camera, mesh: meshRef.current });
               vertices.set(verts);
             }}
           />
@@ -95,26 +104,44 @@ function Geometry({ size = { width: 300, height: 200 } }) {
 }
 
 function Wireframe() {
-  const vertices = useVertices();
+  const geometry = useGeometry();
   const polylineRef = useRef<SVGPolylineElement>(null!);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
   useEffect(() => {
-    vertices.cuboid.on("change", () => {
-      const verts = vertices.cuboid.get();
+    geometry.cuboid.vertices.on("change", (verts) => {
       polylineRef.current.setAttribute(
         "points",
         verts.map(({ x, y }) => `${x},${y}`).join(" ")
       );
+      const { x: _x, y: _y } = getCentroid(verts[0], verts[1]);
+      x.set(_x);
+      y.set(_y);
     });
   });
 
-  const points = vertices.cuboid
+  const points = geometry.cuboid.vertices
     .get()
     .map(({ x, y }) => `${x},${y}`)
     .join(" ");
 
   return (
-    <polyline points={points} ref={polylineRef} fill="none" stroke="black" />
+    <>
+      <polyline points={points} ref={polylineRef} fill="none" stroke="black" />
+      <motion.circle
+        dragMomentum
+        onPan={(_, info) => {
+          const scaleX = info.offset.x / 100;
+          const mesh = geometry.cuboid.mesh.current;
+          mesh.geometry = new THREE.BoxGeometry(1 + scaleX, 1, 1);
+        }}
+        cx={x}
+        cy={y}
+        r={5}
+        fill="red"
+      />
+    </>
   );
 }
 
@@ -140,7 +167,6 @@ function getInitialVertices() {
 
   camera.zoom = 200;
   camera.updateProjectionMatrix();
-  console.log("initial", { ...camera });
 
   return getVertPositions({ mesh, camera });
 }
@@ -171,9 +197,24 @@ function getVertPositions({
   return vertPositions;
 }
 
-const useVertices = () => {
+const useGeometry = () => {
   const vertices = useContext(CanvasContext);
   return vertices;
 };
 
 type Point = { x: number; y: number };
+
+function getCentroid(...arr: Point[]): Point {
+  let sumX = 0;
+  let sumY = 0;
+
+  for (let i = 0; i < arr.length; i++) {
+    sumX += arr[i].x;
+    sumY += arr[i].y;
+  }
+
+  let centroidX = sumX / arr.length;
+  let centroidY = sumY / arr.length;
+
+  return { x: centroidX, y: centroidY };
+}
