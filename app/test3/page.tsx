@@ -47,6 +47,11 @@ const Shape = forwardRef<
 });
 
 const CanvasContext = createContext<{
+  setOrbitControllerProps: React.Dispatch<
+    React.SetStateAction<{
+      enabled: boolean;
+    }>
+  >;
   cuboid: {
     vertices: MotionValue<Point[]>;
     mesh: React.MutableRefObject<THREE.Mesh>;
@@ -60,12 +65,18 @@ function Geometry({ size = { width: 300, height: 200 } }) {
   const vertices = useMotionValue(initialVertices);
   const meshRef = useRef<THREE.Mesh>(null!);
 
+  const [orbitControllerProps, setOrbitControllerProps] = useState({
+    enabled: true,
+  });
+
   useLayoutEffect(() => {
     setHydrated(true);
   }, []);
 
   return (
-    <CanvasContext.Provider value={{ cuboid: { vertices, mesh: meshRef } }}>
+    <CanvasContext.Provider
+      value={{ cuboid: { vertices, mesh: meshRef }, setOrbitControllerProps }}
+    >
       {hydrated && (
         <Canvas
           style={{ display: !hydrated ? "none" : "block" }}
@@ -82,7 +93,7 @@ function Geometry({ size = { width: 300, height: 200 } }) {
             return gl;
           }}
         >
-          <OrbitControls enabled />
+          <OrbitControls {...orbitControllerProps} />
           <Shape
             ref={meshRef}
             onUpdate={({ state: { camera } }) => {
@@ -104,40 +115,61 @@ function Geometry({ size = { width: 300, height: 200 } }) {
 }
 
 function Wireframe() {
-  const geometry = useGeometry();
+  const { cuboid, setOrbitControllerProps } = useGeometry();
   const polylineRef = useRef<SVGPolylineElement>(null!);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+  const xScaleElRef = useRef<SVGCircleElement>(null!);
+  const zScaleElRef = useRef<SVGCircleElement>(null!);
 
   useEffect(() => {
-    geometry.cuboid.vertices.on("change", (verts) => {
+    cuboid.vertices.on("change", (verts) => {
       polylineRef.current.setAttribute(
         "points",
         verts.map(({ x, y }) => `${x},${y}`).join(" ")
       );
-      const { x: _x, y: _y } = getCentroid(verts[0], verts[1]);
-      x.set(_x);
-      y.set(_y);
+      if (!xScaleElRef.current || !zScaleElRef.current) return;
+      const xPoint = getCentroid(verts[2], verts[3]);
+      xScaleElRef.current.setAttribute("cx", xPoint.x.toString());
+      xScaleElRef.current.setAttribute("cy", xPoint.y.toString());
+      const zPoint = getCentroid(verts[2], verts[7]);
+      zScaleElRef.current.setAttribute("cx", zPoint.x.toString());
+      zScaleElRef.current.setAttribute("cy", zPoint.y.toString());
     });
   });
 
-  const points = geometry.cuboid.vertices
+  const points = cuboid.vertices
     .get()
     .map(({ x, y }) => `${x},${y}`)
     .join(" ");
+
+  const enable = () => setOrbitControllerProps({ enabled: true });
+  const disable = () => setOrbitControllerProps({ enabled: false });
 
   return (
     <>
       <polyline points={points} ref={polylineRef} fill="none" stroke="black" />
       <motion.circle
+        ref={xScaleElRef}
         dragMomentum
+        onPointerEnter={disable}
+        onPointerLeave={enable}
         onPan={(_, info) => {
           const scaleX = info.offset.x / 100;
-          const mesh = geometry.cuboid.mesh.current;
+          const mesh = cuboid.mesh.current;
           mesh.geometry = new THREE.BoxGeometry(1 + scaleX, 1, 1);
         }}
-        cx={x}
-        cy={y}
+        r={5}
+        fill="red"
+      />
+      <motion.circle
+        ref={zScaleElRef}
+        dragMomentum
+        onPointerEnter={disable}
+        onPointerLeave={enable}
+        onPan={(_, info) => {
+          const scaleY = info.offset.y / 100;
+          const mesh = cuboid.mesh.current;
+          mesh.geometry = new THREE.BoxGeometry(1, 1, 1 + scaleY);
+        }}
         r={5}
         fill="red"
       />
