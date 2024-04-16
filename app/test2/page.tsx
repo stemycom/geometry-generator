@@ -4,19 +4,21 @@ import * as THREE from "three";
 import { Interactive } from "./interactive";
 import { createRef, useEffect, useState } from "react";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { set } from "date-fns";
 
 const size = { width: 300, height: 200 };
 
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
 camera.zoom = 200;
-//camera rotation for isometric grid
 camera.position.set(1, 0.5, -0.5);
 camera.lookAt(0, 0, 0);
 
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 
 const cube = new THREE.Mesh(geometry);
+cube.rotation.set(0.5, 0.5, 0.5);
+
 scene.add(cube);
 
 const vertPositions: Point[] = [];
@@ -99,14 +101,30 @@ export default function Page() {
       svgRef.current as unknown as HTMLElement
     );
     controls.enableDamping = true;
-    const animate = () => {
-      controls.update();
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5;
+
+    controls.addEventListener("start", () => {});
+    controls.addEventListener("change", () => {
       setUpdate((u) => u + 1);
-      requestAnimationFrame(animate);
-      console.log("animate");
-    };
-    animate();
-    console.log("setting up OrbitControls");
+    });
+    controls.addEventListener("end", () => {
+      animate();
+    });
+
+    function animate() {
+      const shouldUpdate = controls.update();
+      if (shouldUpdate) requestAnimationFrame(animate);
+    }
+  }, []);
+
+  useEffect(() => {
+    // function rotate() {
+    //   cube.rotation.x += 0.1;
+    //   requestAnimationFrame(rotate);
+    //   setUpdate((u) => u + 1);
+    // }
+    // rotate();
   }, []);
 
   return (
@@ -120,7 +138,7 @@ export default function Page() {
       </svg>
       {/* <Interactive /> */}
       {/* <pre className="text-xs">{JSON.stringify(vertPositions, null, 2)}</pre> */}
-      <pre className="text-xs">{JSON.stringify(camera.position, null, 2)}</pre>
+      <pre className="text-xs">{JSON.stringify(cube.rotation, null, 2)}</pre>
     </div>
   );
 }
