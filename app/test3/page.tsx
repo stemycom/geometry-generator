@@ -2,6 +2,7 @@
 
 import { Camera, Canvas, RootState, useFrame } from "@react-three/fiber";
 import {
+  MutableRefObject,
   forwardRef,
   useContext,
   useEffect,
@@ -52,6 +53,7 @@ const CanvasContext = createContext<{
       enabled: boolean;
     }>
   >;
+  cameraRef: MutableRefObject<Camera>;
   cuboid: {
     vertices: MotionValue<Point[]>;
     mesh: React.MutableRefObject<THREE.Mesh>;
@@ -60,10 +62,14 @@ const CanvasContext = createContext<{
 
 function Geometry({ size = { width: 300, height: 200 } }) {
   const [hydrated, setHydrated] = useState(false);
+
+  const initialCamera = createInitialCamera();
+  const initialVertices = getInitialVertices(initialCamera);
+
   const svgRef = useRef<SVGSVGElement>(null!);
-  const initialVertices = getInitialVertices();
   const vertices = useMotionValue(initialVertices);
   const meshRef = useRef<THREE.Mesh>(null!);
+  const cameraRef = useRef<Camera>(initialCamera);
 
   const [orbitControllerProps, setOrbitControllerProps] = useState({
     enabled: true,
@@ -73,9 +79,15 @@ function Geometry({ size = { width: 300, height: 200 } }) {
     setHydrated(true);
   }, []);
 
+  const firstUpdate = useRef(true);
+
   return (
     <CanvasContext.Provider
-      value={{ cuboid: { vertices, mesh: meshRef }, setOrbitControllerProps }}
+      value={{
+        cameraRef,
+        cuboid: { vertices, mesh: meshRef },
+        setOrbitControllerProps,
+      }}
     >
       {hydrated && (
         <Canvas
@@ -97,6 +109,10 @@ function Geometry({ size = { width: 300, height: 200 } }) {
           <Shape
             ref={meshRef}
             onUpdate={({ state: { camera } }) => {
+              if (firstUpdate.current) {
+                firstUpdate.current = false;
+                cameraRef.current = camera;
+              }
               const verts = getVertPositions({ camera, mesh: meshRef.current });
               vertices.set(verts);
             }}
@@ -108,10 +124,31 @@ function Geometry({ size = { width: 300, height: 200 } }) {
         className="w-full max-w-96 aspect-square bg-white [grid-area:1/1]"
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
-        <Wireframe />
+        {/* <Wireframe /> */}
+        <Faces />
       </svg>
     </CanvasContext.Provider>
   );
+}
+
+function createInitialCamera() {
+  const camera = new THREE.OrthographicCamera(
+    -192, // left
+    192, // right
+    192, // top
+    -192, // bottom
+    1,
+    1000
+  );
+
+  camera.position.set(1, 1, 1.5);
+  camera.lookAt(0, 0, 0);
+  camera.updateWorldMatrix(true, true);
+
+  camera.zoom = 200;
+  camera.updateProjectionMatrix();
+
+  return camera;
 }
 
 function Wireframe() {
@@ -204,28 +241,66 @@ function Wireframe() {
   );
 }
 
-function getInitialVertices() {
-  const scene = new THREE.Scene();
+function Faces() {
+  const { cuboid, cameraRef } = useGeometry();
+  const faceRefs = useRef<SVGPolygonElement[]>([]);
 
-  const camera = new THREE.OrthographicCamera(
-    -192, // left
-    192, // right
-    192, // top
-    -192, // bottom
-    1,
-    1000
+  cuboid.vertices.on("change", (verts) => {
+    for (let i = 0; i < 6; i++) {
+      const [p1, p2, p3, p4] = verts.slice(i * 4, i * 4 + 4);
+      const points = [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ");
+
+      const normal = new THREE.Vector3();
+      const a = new THREE.Vector3();
+      const b = new THREE.Vector3();
+      const c = new THREE.Vector3();
+
+      const geometry = cuboid.mesh.current.geometry as THREE.BufferGeometry;
+
+      const index = i * 4;
+      a.fromBufferAttribute(geometry.attributes.position, index);
+      b.fromBufferAttribute(geometry.attributes.position, index + 1);
+      c.fromBufferAttribute(geometry.attributes.position, index + 2);
+
+      normal.crossVectors(b.sub(a), c.sub(a)).normalize();
+      const cameraDirection = new THREE.Vector3();
+
+      const camera = cameraRef.current;
+      camera.getWorldDirection(cameraDirection);
+      const dot = normal.dot(cameraDirection);
+      const flipped = dot < 0;
+
+      faceRefs.current[i].setAttribute("points", points);
+      if (flipped) {
+        faceRefs.current[i].setAttribute("fill", "rgba(148, 163, 184, 0.10)");
+        faceRefs.current[i].setAttribute("stroke", "#94a3b822");
+      } else {
+        faceRefs.current[i].setAttribute("fill", "rgba(0,0,0,0)");
+        faceRefs.current[i].setAttribute("stroke", "#94a3b8");
+      }
+    }
+  });
+
+  return (
+    <>
+      {Array.from({ length: 6 }, (_, i) => (
+        <polygon
+          key={i}
+          ref={(el) => {
+            if (!el) return;
+            faceRefs.current[i] = el;
+          }}
+        />
+      ))}
+    </>
   );
+}
 
+function getInitialVertices(camera: THREE.OrthographicCamera) {
+  const scene = new THREE.Scene();
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   const mesh = new THREE.Mesh(geometry);
   scene.add(mesh);
-
-  camera.position.set(1, 1, 1.5);
-  camera.lookAt(0, 0, 0);
-  camera.updateWorldMatrix(true, true);
-
-  camera.zoom = 200;
-  camera.updateProjectionMatrix();
 
   return getVertPositions({ mesh, camera });
 }
