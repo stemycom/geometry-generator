@@ -63,13 +63,13 @@ const CanvasContext = createContext<{
 function Geometry({ size = { width: 300, height: 200 } }) {
   const [hydrated, setHydrated] = useState(false);
 
-  const initialCamera = createInitialCamera();
-  const initialVertices = getInitialVertices(initialCamera);
+  const initialScene = createInitialScene();
+  const initialVertices = getVertPositions(initialScene);
 
   const svgRef = useRef<SVGSVGElement>(null!);
   const vertices = useMotionValue(initialVertices);
-  const meshRef = useRef<THREE.Mesh>(null!);
-  const cameraRef = useRef<Camera>(initialCamera);
+  const meshRef = useRef<THREE.Mesh>(initialScene.mesh);
+  const cameraRef = useRef<Camera>(initialScene.camera);
 
   const [orbitControllerProps, setOrbitControllerProps] = useState({
     enabled: true,
@@ -126,29 +126,89 @@ function Geometry({ size = { width: 300, height: 200 } }) {
       >
         {/* <Wireframe /> */}
         <Faces />
+        <Gizmos />
       </svg>
     </CanvasContext.Provider>
   );
 }
 
-function createInitialCamera() {
-  const camera = new THREE.OrthographicCamera(
-    -192, // left
-    192, // right
-    192, // top
-    -192, // bottom
-    1,
-    1000
+function Gizmos() {
+  const { cuboid, setOrbitControllerProps } = useGeometry();
+  const xScaleElRef = useRef<SVGCircleElement>(null!);
+  const zScaleElRef = useRef<SVGCircleElement>(null!);
+
+  useEffect(() => {
+    cuboid.vertices.on("change", (verts) => {
+      if (!xScaleElRef.current || !zScaleElRef.current) return;
+      const xPoint = getCentroid(verts[2], verts[3]);
+      xScaleElRef.current.setAttribute("cx", xPoint.x.toString());
+      xScaleElRef.current.setAttribute("cy", xPoint.y.toString());
+      const zPoint = getCentroid(verts[2], verts[7]);
+      zScaleElRef.current.setAttribute("cx", zPoint.x.toString());
+      zScaleElRef.current.setAttribute("cy", zPoint.y.toString());
+    });
+  });
+
+  const enable = () => setOrbitControllerProps({ enabled: true });
+  const disable = () => setOrbitControllerProps({ enabled: false });
+
+  const scale = useRef({
+    x: 1,
+    z: 1,
+    runningX: 0,
+    runningZ: 0,
+  });
+
+  return (
+    <>
+      <motion.circle
+        ref={xScaleElRef}
+        dragMomentum
+        onPointerEnter={disable}
+        onPointerLeave={enable}
+        onPan={(_, info) => {
+          const runningX = info.offset.x / 100;
+          const startingScale = scale.current.x;
+          scale.current.runningX = runningX;
+          const mesh = cuboid.mesh.current;
+          mesh.geometry = new THREE.BoxGeometry(
+            startingScale + runningX,
+            1,
+            scale.current.z
+          );
+        }}
+        onPanEnd={() => {
+          scale.current.x += scale.current.runningX;
+          scale.current.runningX = 0;
+        }}
+        r={5}
+        fill="red"
+      />
+      <motion.circle
+        ref={zScaleElRef}
+        dragMomentum
+        onPointerEnter={disable}
+        onPointerLeave={enable}
+        onPan={(_, info) => {
+          const scaleY = info.offset.y / 100;
+          const startingScale = scale.current.z;
+          scale.current.runningZ = scaleY;
+          const mesh = cuboid.mesh.current;
+          mesh.geometry = new THREE.BoxGeometry(
+            scale.current.x,
+            1,
+            startingScale + scaleY
+          );
+        }}
+        onPanEnd={() => {
+          scale.current.z += scale.current.runningZ;
+          scale.current.runningZ = 0;
+        }}
+        r={5}
+        fill="red"
+      />
+    </>
   );
-
-  camera.position.set(1, 1, 1.5);
-  camera.lookAt(0, 0, 0);
-  camera.updateWorldMatrix(true, true);
-
-  camera.zoom = 200;
-  camera.updateProjectionMatrix();
-
-  return camera;
 }
 
 function Wireframe() {
@@ -245,8 +305,10 @@ function Faces() {
   const { cuboid, cameraRef } = useGeometry();
   const faceRefs = useRef<SVGPolygonElement[]>([]);
 
-  cuboid.vertices.on("change", (verts) => {
-    for (let i = 0; i < 6; i++) {
+  cuboid.vertices.on("change", updateFaces);
+
+  function calculateFaces(verts: Point[]) {
+    return Array.from({ length: 6 }, (_, i) => {
       const [p1, p2, p3, p4] = verts.slice(i * 4, i * 4 + 4);
       const points = [p1, p2, p4, p3].map((v) => `${v.x},${v.y}`).join(" ");
 
@@ -270,39 +332,60 @@ function Faces() {
       const dot = normal.dot(cameraDirection);
       const flipped = dot < 0;
 
-      faceRefs.current[i].setAttribute("points", points);
-      if (flipped) {
-        faceRefs.current[i].setAttribute("fill", "rgba(148, 163, 184, 0.10)");
-        faceRefs.current[i].setAttribute("stroke", "#94a3b822");
-      } else {
-        faceRefs.current[i].setAttribute("fill", "rgba(0,0,0,0)");
-        faceRefs.current[i].setAttribute("stroke", "#94a3b8");
-      }
-    }
-  });
+      return {
+        points,
+        fill: flipped ? "rgba(148, 163, 184, 0.10)" : "rgba(0,0,0,0)",
+        stroke: flipped ? "#94a3b822" : "#94a3b8",
+      };
+    });
+  }
 
-  return (
-    <>
-      {Array.from({ length: 6 }, (_, i) => (
-        <polygon
-          key={i}
-          ref={(el) => {
-            if (!el) return;
-            faceRefs.current[i] = el;
-          }}
-        />
-      ))}
-    </>
-  );
+  function updateFaces(verts: Point[]) {
+    const faces = calculateFaces(verts);
+    faces.forEach((face, i) => {
+      const ref = faceRefs.current[i];
+      ref.setAttribute("points", face.points);
+      ref.setAttribute("fill", face.fill);
+      ref.setAttribute("stroke", face.stroke);
+    });
+  }
+
+  return calculateFaces(cuboid.vertices.get()).map((face, i) => (
+    <polygon
+      key={i}
+      ref={(el) => {
+        faceRefs.current[i] = el!;
+      }}
+      points={face.points}
+      fill={face.fill}
+      stroke={face.stroke}
+    />
+  ));
 }
 
-function getInitialVertices(camera: THREE.OrthographicCamera) {
+function createInitialScene() {
+  const camera = new THREE.OrthographicCamera(
+    -192, // left
+    192, // right
+    192, // top
+    -192, // bottom
+    1,
+    1000
+  );
+
+  camera.position.set(1, 1, 1.5);
+  camera.lookAt(0, 0, 0);
+  camera.updateWorldMatrix(true, true);
+
+  camera.zoom = 200;
+  camera.updateProjectionMatrix();
+
   const scene = new THREE.Scene();
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   const mesh = new THREE.Mesh(geometry);
   scene.add(mesh);
 
-  return getVertPositions({ mesh, camera });
+  return { mesh, camera };
 }
 
 function getVertPositions({
