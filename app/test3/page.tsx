@@ -144,6 +144,13 @@ function Wireframe() {
   const enable = () => setOrbitControllerProps({ enabled: true });
   const disable = () => setOrbitControllerProps({ enabled: false });
 
+  const scale = useRef({
+    x: 1,
+    z: 1,
+    runningX: 0,
+    runningZ: 0,
+  });
+
   return (
     <>
       <polyline points={points} ref={polylineRef} fill="none" stroke="black" />
@@ -153,9 +160,19 @@ function Wireframe() {
         onPointerEnter={disable}
         onPointerLeave={enable}
         onPan={(_, info) => {
-          const scaleX = info.offset.x / 100;
+          const runningX = info.offset.x / 100;
+          const startingScale = scale.current.x;
+          scale.current.runningX = runningX;
           const mesh = cuboid.mesh.current;
-          mesh.geometry = new THREE.BoxGeometry(1 + scaleX, 1, 1);
+          mesh.geometry = new THREE.BoxGeometry(
+            startingScale + runningX,
+            1,
+            scale.current.z
+          );
+        }}
+        onPanEnd={() => {
+          scale.current.x += scale.current.runningX;
+          scale.current.runningX = 0;
         }}
         r={5}
         fill="red"
@@ -167,8 +184,18 @@ function Wireframe() {
         onPointerLeave={enable}
         onPan={(_, info) => {
           const scaleY = info.offset.y / 100;
+          const startingScale = scale.current.z;
+          scale.current.runningZ = scaleY;
           const mesh = cuboid.mesh.current;
-          mesh.geometry = new THREE.BoxGeometry(1, 1, 1 + scaleY);
+          mesh.geometry = new THREE.BoxGeometry(
+            scale.current.x,
+            1,
+            startingScale + scaleY
+          );
+        }}
+        onPanEnd={() => {
+          scale.current.z += scale.current.runningZ;
+          scale.current.runningZ = 0;
         }}
         r={5}
         fill="red"
