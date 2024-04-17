@@ -124,11 +124,34 @@ function Geometry({ size = { width: 300, height: 200 } }) {
         className="w-full max-w-96 aspect-square bg-white [grid-area:1/1]"
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
-        {/* <Wireframe /> */}
+        <CornerVerts />
         <Faces />
+        <Diagonals />
         <Gizmos />
+        {/* <Wireframe /> */}
       </svg>
     </CanvasContext.Provider>
+  );
+}
+
+function Diagonals() {
+  const { cuboid, setOrbitControllerProps } = useGeometry();
+  const polylineRef = useRef<SVGPolylineElement>(null!);
+
+  useEffect(() => {
+    cuboid.vertices.on("change", (verts) => {
+      const points = [verts[0], verts[6]].map(({ x, y }) => `${x},${y}`);
+      polylineRef.current.setAttribute("points", points.join(" "));
+    });
+  });
+
+  return (
+    <polyline
+      ref={polylineRef}
+      fill="none"
+      stroke="#94A3B8"
+      strokeDasharray="3 5"
+    />
   );
 }
 
@@ -299,6 +322,46 @@ function Wireframe() {
       />
     </>
   );
+}
+
+function CornerVerts() {
+  const { cuboid, setOrbitControllerProps } = useGeometry();
+  const textRefs = useRef<SVGTextElement[]>([]);
+
+  cuboid.vertices.on("change", updateCornerLabels);
+
+  function getCorners(verts: Point[]) {
+    return Array.from({ length: 8 }, (_, i) => {
+      const p = verts[i];
+      return {
+        x: p.x,
+        y: p.y,
+      };
+    });
+  }
+
+  function updateCornerLabels(verts: Point[]) {
+    const corners = getCorners(verts);
+    corners.forEach((corner, i) => {
+      const text = textRefs.current[i];
+      text.setAttribute("x", corner.x.toString());
+      text.setAttribute("y", corner.y.toString());
+    });
+  }
+
+  return getCorners(cuboid.vertices.get()).map((pos, i) => (
+    <text
+      key={i}
+      {...pos}
+      ref={(el) => {
+        textRefs.current[i] = el!;
+      }}
+      fontSize={10}
+      textAnchor="middle"
+    >
+      {i}
+    </text>
+  ));
 }
 
 function Faces() {
