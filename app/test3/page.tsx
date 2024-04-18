@@ -121,7 +121,7 @@ function Geometry({ size = { width: 300, height: 200 } }) {
       )}
       <motion.svg
         ref={svgRef}
-        className="w-full max-w-96 aspect-square bg-white [grid-area:1/1] outline-none"
+        className="w-full max-w-96 aspect-square bg-white [grid-area:1/1] outline-none cursor-grab active:cursor-grabbing"
         whileHover="containerHover"
         whileTap="containerHover"
         style={{
@@ -132,10 +132,10 @@ function Geometry({ size = { width: 300, height: 200 } }) {
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
         <CornerVerts />
-        <Faces />
-        {/* <Diagonals types={["base", "body", "front"]} /> */}
-        <Gizmos />
+        <Diagonals types={["body"]} />
         {/* <Wireframe /> */}
+        <Faces />
+        <Gizmos />
       </motion.svg>
     </CanvasContext.Provider>
   );
@@ -423,17 +423,27 @@ function Wireframe() {
 }
 
 function CornerVerts() {
-  const { cuboid, setOrbitControllerProps } = useGeometry();
+  const { cuboid } = useGeometry();
   const textRefs = useRef<SVGTextElement[]>([]);
 
   cuboid.vertices.on("change", updateCornerLabels);
 
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
   function getCorners(verts: Point[]) {
+    const center = getCentroid(...verts);
+    x.set(center.x);
+    y.set(center.y);
+
     return Array.from({ length: 8 }, (_, i) => {
       const p = verts[i];
+      //move way from center
+      const x = p.x + (p.x - center.x) * 0.12;
+      const y = p.y + (p.y - center.y) * 0.12;
       return {
-        x: p.x,
-        y: p.y,
+        x,
+        y,
       };
     });
   }
@@ -447,19 +457,28 @@ function CornerVerts() {
     });
   }
 
-  return getCorners(cuboid.vertices.get()).map((pos, i) => (
-    <text
-      key={i}
-      {...pos}
-      ref={(el) => {
-        textRefs.current[i] = el!;
-      }}
-      fontSize={10}
-      textAnchor="middle"
-    >
-      {i}
-    </text>
-  ));
+  return (
+    <>
+      <motion.circle r={3} cx={x} cy={y} fill="blue" />
+      {getCorners(cuboid.vertices.get()).map((pos, i) => (
+        <text
+          key={i}
+          {...pos}
+          dominantBaseline="middle"
+          textAnchor="middle"
+          ref={(el) => {
+            textRefs.current[i] = el!;
+          }}
+          style={{
+            fill: "rgb(71,85,105)",
+          }}
+          fontSize={10}
+        >
+          {String.fromCharCode(65 + i)}
+        </text>
+      ))}
+    </>
+  );
 }
 
 function Faces() {
@@ -495,8 +514,8 @@ function Faces() {
 
       return {
         points,
-        fill: flipped ? "rgba(148, 163, 184, 0.10)" : "rgba(0,0,0,0)",
-        stroke: flipped ? "#94a3b822" : "#94a3b8",
+        fill: flipped ? "rgba(148, 163, 184, 0.1)" : "rgba(0,0,0,0)",
+        stroke: flipped ? "#94a3b839" : "#94a3b8",
       };
     });
   }
@@ -595,31 +614,4 @@ function getCentroid(...arr: Point[]): Point {
   let centroidY = sumY / arr.length;
 
   return { x: centroidX, y: centroidY };
-}
-
-/**
- * Calculate the distance between two points projected onto a line at a specified angle.
- *
- * @param point1 - The first point.
- * @param point2 - The second point.
- * @param angleDegrees - The angle in degrees at which to project the distance.
- * @returns The distance between the two points projected on an angle.
- */
-function calculateProjectedDistance(
-  point1: Point,
-  point2: Point,
-  angleDegrees: number
-): number {
-  const angleRadians = angleDegrees * (Math.PI / 180); // Convert angle to radians
-
-  // Calculate the differences
-  const dx = point2.x - point1.x;
-  const dy = point2.y - point1.y;
-
-  // Adjust dx, dy to rotate the coordinate system by -angleRadians
-  const rotatedDX = dx * Math.cos(angleRadians) + dy * Math.sin(angleRadians);
-  const rotatedDY = -dx * Math.sin(angleRadians) + dy * Math.cos(angleRadians);
-
-  // The perpendicular distance relative to the original line at the specified angle
-  return Math.abs(rotatedDY);
 }
