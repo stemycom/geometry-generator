@@ -119,46 +119,116 @@ function Geometry({ size = { width: 300, height: 200 } }) {
           />
         </Canvas>
       )}
-      <svg
+      <motion.svg
         ref={svgRef}
-        className="w-full max-w-96 aspect-square bg-white [grid-area:1/1]"
+        className="w-full max-w-96 aspect-square bg-white [grid-area:1/1] outline-none"
+        whileHover="containerHover"
+        whileTap="containerHover"
+        style={{
+          userSelect: "none",
+          //@ts-ignore
+          "-webkit-user-select": "none",
+        }}
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
         <CornerVerts />
         <Faces />
-        <Diagonals />
+        {/* <Diagonals types={["base", "body", "front"]} /> */}
         <Gizmos />
         {/* <Wireframe /> */}
-      </svg>
+      </motion.svg>
     </CanvasContext.Provider>
   );
 }
 
-function Diagonals() {
-  const { cuboid, setOrbitControllerProps } = useGeometry();
-  const polylineRef = useRef<SVGPolylineElement>(null!);
+type DiagonalType = "base" | "front" | "body";
 
-  useEffect(() => {
-    cuboid.vertices.on("change", (verts) => {
-      const points = [verts[0], verts[6]].map(({ x, y }) => `${x},${y}`);
-      polylineRef.current.setAttribute("points", points.join(" "));
-    });
+function Diagonals({ types }: { types: DiagonalType[] }) {
+  const { cuboid, cameraRef } = useGeometry();
+  const polylinesRef = useRef<SVGPolylineElement[]>([]);
+
+  cuboid.vertices.on("change", (verts) => {
+    getIndexes(types)
+      .map((indexes) => calculateDiagonals(verts, indexes))
+      .map((diagonals, i) => {
+        if (!polylinesRef.current[i]) return;
+        const polyline = polylinesRef.current[i];
+        polyline.setAttribute("points", diagonals.points);
+        polyline.setAttribute("stroke-dasharray", diagonals.strokeDasharray);
+      });
   });
 
-  return (
-    <polyline
-      ref={polylineRef}
-      fill="none"
-      stroke="#94A3B8"
-      strokeDasharray="3 5"
-    />
-  );
+  function calculateDiagonals(verts: Point[], indexes: [number, number]) {
+    const a = new THREE.Vector3();
+    const b = new THREE.Vector3();
+
+    a.fromBufferAttribute(
+      cuboid.mesh.current.geometry.attributes.position,
+      indexes[0]
+    );
+    b.fromBufferAttribute(
+      cuboid.mesh.current.geometry.attributes.position,
+      indexes[1]
+    );
+
+    a.applyMatrix4(cuboid.mesh.current.matrixWorld);
+    b.applyMatrix4(cuboid.mesh.current.matrixWorld);
+
+    const camera = cameraRef.current;
+
+    a.project(camera);
+    b.project(camera);
+
+    const distance = a.distanceTo(b);
+
+    const points = [verts[indexes[0]], verts[indexes[1]]]
+      .map(({ x, y }) => `${x},${y}`)
+      .join(" ");
+    return {
+      points,
+      strokeDasharray: `${distance * 3} ${distance * 2}`,
+    };
+  }
+
+  function getIndexes(types: DiagonalType[]): [number, number][] {
+    return types.map((type) => {
+      switch (type) {
+        case "base":
+          return [7, 3];
+        case "front":
+          return [7, 0];
+        case "body":
+          return [7, 1];
+      }
+    });
+  }
+
+  return getIndexes(types)
+    .map((indexes) => calculateDiagonals(cuboid.vertices.get(), indexes))
+    .map(({ points, strokeDasharray }, i) => (
+      <polyline
+        key={i}
+        ref={(el) => {
+          polylinesRef.current[i] = el!;
+        }}
+        points={points}
+        strokeDasharray={strokeDasharray}
+        fill="none"
+        stroke="#94a3b8"
+      />
+    ));
 }
 
 function Gizmos() {
   const { cuboid, setOrbitControllerProps } = useGeometry();
   const xScaleElRef = useRef<SVGCircleElement>(null!);
   const zScaleElRef = useRef<SVGCircleElement>(null!);
+
+  const xOriginX = useMotionValue("");
+  const xOriginY = useMotionValue("");
+
+  const zOriginX = useMotionValue("");
+  const zOriginY = useMotionValue("");
 
   useEffect(() => {
     cuboid.vertices.on("change", (verts) => {
@@ -169,6 +239,12 @@ function Gizmos() {
       const zPoint = getCentroid(verts[2], verts[7]);
       zScaleElRef.current.setAttribute("cx", zPoint.x.toString());
       zScaleElRef.current.setAttribute("cy", zPoint.y.toString());
+
+      xOriginX.set(`${xPoint.x}px`);
+      xOriginY.set(`${xPoint.y}px`);
+
+      zOriginX.set(`${zPoint.x}px`);
+      zOriginY.set(`${zPoint.y}px`);
     });
   });
 
@@ -204,6 +280,17 @@ function Gizmos() {
           scale.current.x += scale.current.runningX;
           scale.current.runningX = 0;
         }}
+        initial={{ opacity: 0, scale: 0 }}
+        style={{
+          originX: xOriginX,
+          originY: xOriginY,
+        }}
+        variants={{
+          containerHover: {
+            opacity: 1,
+            scale: 1,
+          },
+        }}
         r={5}
         fill="red"
       />
@@ -226,6 +313,17 @@ function Gizmos() {
         onPanEnd={() => {
           scale.current.z += scale.current.runningZ;
           scale.current.runningZ = 0;
+        }}
+        initial={{ opacity: 0, scale: 0 }}
+        style={{
+          originX: zOriginX,
+          originY: zOriginY,
+        }}
+        variants={{
+          containerHover: {
+            opacity: 1,
+            scale: 1,
+          },
         }}
         r={5}
         fill="red"
@@ -497,4 +595,31 @@ function getCentroid(...arr: Point[]): Point {
   let centroidY = sumY / arr.length;
 
   return { x: centroidX, y: centroidY };
+}
+
+/**
+ * Calculate the distance between two points projected onto a line at a specified angle.
+ *
+ * @param point1 - The first point.
+ * @param point2 - The second point.
+ * @param angleDegrees - The angle in degrees at which to project the distance.
+ * @returns The distance between the two points projected on an angle.
+ */
+function calculateProjectedDistance(
+  point1: Point,
+  point2: Point,
+  angleDegrees: number
+): number {
+  const angleRadians = angleDegrees * (Math.PI / 180); // Convert angle to radians
+
+  // Calculate the differences
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
+
+  // Adjust dx, dy to rotate the coordinate system by -angleRadians
+  const rotatedDX = dx * Math.cos(angleRadians) + dy * Math.sin(angleRadians);
+  const rotatedDY = -dx * Math.sin(angleRadians) + dy * Math.cos(angleRadians);
+
+  // The perpendicular distance relative to the original line at the specified angle
+  return Math.abs(rotatedDY);
 }
