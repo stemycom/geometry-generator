@@ -16,11 +16,15 @@ import { motion } from "framer-motion";
 import { createContext } from "react";
 import { MotionValue, useMotionValue } from "framer-motion";
 import { OrbitControls } from "@react-three/drei";
+import { cuboidDrawPrompt } from "../ai-function-prompts";
+import { z } from "zod";
+
+type Props = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
 
 export default function Page() {
   return (
     <div className="w-full max-w-96 aspect-square bg-white">
-      <Geometry />
+      <Cuboid size={[1, 0.75]} />
     </div>
   );
 }
@@ -30,9 +34,10 @@ const size = { width: 200, height: 200 };
 const Shape = forwardRef<
   THREE.Mesh,
   {
+    size: Props["size"];
     onUpdate: (arg: { state: RootState }) => void;
   }
->(({ onUpdate }, meshRef) => {
+>(({ onUpdate, size }, meshRef) => {
   useFrame((state) => {
     onUpdate({ state });
     // if (!meshRef) return;
@@ -42,7 +47,7 @@ const Shape = forwardRef<
 
   return (
     <mesh ref={meshRef}>
-      <boxGeometry args={[1, 1, 1]} />
+      <boxGeometry args={[size[0], size[1], 1]} />
     </mesh>
   );
 });
@@ -60,10 +65,10 @@ const CanvasContext = createContext<{
   };
 }>(null!);
 
-function Geometry({ size = { width: 300, height: 200 } }) {
+function Cuboid(props: Props) {
   const [hydrated, setHydrated] = useState(false);
 
-  const initialScene = createInitialScene();
+  const initialScene = createInitialScene(props);
   const initialVertices = getVertPositions(initialScene);
 
   const svgRef = useRef<SVGSVGElement>(null!);
@@ -108,6 +113,7 @@ function Geometry({ size = { width: 300, height: 200 } }) {
           <OrbitControls {...orbitControllerProps} zoomSpeed={0.4} />
           <Shape
             ref={meshRef}
+            size={props.size}
             onUpdate={({ state: { camera } }) => {
               if (firstUpdate.current) {
                 firstUpdate.current = false;
@@ -664,7 +670,7 @@ function Faces() {
   ));
 }
 
-function createInitialScene() {
+function createInitialScene(props: Props) {
   const camera = new THREE.OrthographicCamera(
     -192, // left
     192, // right
@@ -682,7 +688,7 @@ function createInitialScene() {
   camera.updateProjectionMatrix();
 
   const scene = new THREE.Scene();
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const geometry = new THREE.BoxGeometry(...props.size, 1);
   const mesh = new THREE.Mesh(geometry);
   scene.add(mesh);
 

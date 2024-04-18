@@ -118,3 +118,17 @@ export const polygonDrawPrompt = {
       .optional(),
   }),
 };
+
+export const cuboidDrawPrompt = {
+  name: "draw_cuboid",
+  description: `\
+Get the current paramaters for drawing a 3D cuboid. The shape will be drawn on the screen.
+Don't nessessarily add all the parameters (points, angles, corners, etc..) you can add one if you want. Try to keep it simple at first.`,
+  parameters: z.object({
+    size: z.array(z.union([z.number(), z.number()])).describe(
+      `\
+The size of the cuboid. In the format of [width, depth]. eg. [1, 0.5] keep the width and depth between 0 and 1. Keep one of the values 1.
+The size will be translated to the user as 10cm x 5cm. So if the user asks for different sizes, you can use the same size but change the translation.`
+    ),
+  }),
+};
