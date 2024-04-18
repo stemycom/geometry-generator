@@ -105,7 +105,7 @@ function Geometry({ size = { width: 300, height: 200 } }) {
             return gl;
           }}
         >
-          <OrbitControls {...orbitControllerProps} />
+          <OrbitControls {...orbitControllerProps} zoomSpeed={0.4} />
           <Shape
             ref={meshRef}
             onUpdate={({ state: { camera } }) => {
@@ -131,10 +131,10 @@ function Geometry({ size = { width: 300, height: 200 } }) {
         }}
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
-        <CornerVerts />
         <Diagonals types={["body"]} />
         {/* <Wireframe /> */}
         <Faces />
+        <CornerVerts />
         <Gizmos />
       </motion.svg>
     </CanvasContext.Provider>
@@ -284,6 +284,7 @@ function Gizmos() {
         style={{
           originX: xOriginX,
           originY: xOriginY,
+          cursor: "ew-resize",
         }}
         variants={{
           containerHover: {
@@ -318,6 +319,7 @@ function Gizmos() {
         style={{
           originX: zOriginX,
           originY: zOriginY,
+          cursor: "ns-resize",
         }}
         variants={{
           containerHover: {
@@ -438,7 +440,6 @@ function CornerVerts() {
 
     return Array.from({ length: 8 }, (_, i) => {
       const p = verts[i];
-      //move way from center
       const x = p.x + (p.x - center.x) * 0.12;
       const y = p.y + (p.y - center.y) * 0.12;
       return {
@@ -457,28 +458,29 @@ function CornerVerts() {
     });
   }
 
-  return (
-    <>
-      <motion.circle r={3} cx={x} cy={y} fill="blue" />
-      {getCorners(cuboid.vertices.get()).map((pos, i) => (
-        <text
-          key={i}
-          {...pos}
-          dominantBaseline="middle"
-          textAnchor="middle"
-          ref={(el) => {
-            textRefs.current[i] = el!;
-          }}
-          style={{
-            fill: "rgb(71,85,105)",
-          }}
-          fontSize={10}
-        >
-          {String.fromCharCode(65 + i)}
-        </text>
-      ))}
-    </>
-  );
+  return getCorners(cuboid.vertices.get()).map((pos, i) => (
+    <text
+      key={i}
+      {...pos}
+      dominantBaseline="middle"
+      textAnchor="middle"
+      ref={(el) => {
+        textRefs.current[i] = el!;
+      }}
+      style={{
+        fill: "#475569",
+        fontSize: ".6rem",
+        stroke: "none",
+        textTransform: "uppercase",
+        fontWeight: 500,
+        letterSpacing: "-0.05em",
+      }}
+      fontSize={10}
+    >
+      {i}
+      {/* {String.fromCharCode(65 + i)} */}
+    </text>
+  ));
 }
 
 function Faces() {
@@ -536,6 +538,7 @@ function Faces() {
       ref={(el) => {
         faceRefs.current[i] = el!;
       }}
+      strokeLinejoin="round"
       points={face.points}
       fill={face.fill}
       stroke={face.stroke}
