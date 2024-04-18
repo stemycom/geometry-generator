@@ -151,15 +151,16 @@ function Sides() {
 
   function updateSides() {
     const sides = getIndexes().map(calculateSides);
-    sides.forEach(({ points, transform, x, y, textAnchor }, i) => {
+    sides.forEach((props, i) => {
       const side = sidesRef.current[i];
-      side.setAttribute("points", points);
+      side.setAttribute("points", props.points);
 
       const label = labelRefs.current[i];
-      label.setAttribute("x", x.toString());
-      label.setAttribute("y", y.toString());
-      label.setAttribute("transform", transform);
-      label.setAttribute("text-anchor", textAnchor);
+      label.setAttribute("x", props.x.toString());
+      label.setAttribute("y", props.y.toString());
+      label.setAttribute("transform", props.transform);
+      label.setAttribute("text-anchor", props.textAnchor);
+      label.textContent = props.label;
     });
   }
 
@@ -171,7 +172,7 @@ function Sides() {
     ] as [number, number][];
   }
 
-  function calculateSides(indexes: [number, number]) {
+  function calculateSides(indexes: [number, number], sideIndex: number) {
     const offset = 15;
     const verts = cuboid.vertices.get();
     const a = verts[indexes[0]];
@@ -214,12 +215,17 @@ function Sides() {
 
     const points = offsetPoints.map(({ x, y }) => `${x},${y}`).join(" ");
 
-    return { points, transform, x, y, textAnchor };
+    const geometry = cuboid.mesh.current.geometry as THREE.BoxGeometry;
+    const { width, depth } = geometry.parameters;
+
+    const label = ([depth, width, 1][sideIndex] * 10).toFixed(0) + " cm";
+
+    return { points, transform, x, y, textAnchor, label };
   }
 
   return getIndexes()
     .map(calculateSides)
-    .map(({ points, transform, x, y, textAnchor }, i) => {
+    .map(({ points, transform, x, y, textAnchor, label }, i) => {
       return (
         <>
           <polyline
@@ -229,7 +235,7 @@ function Sides() {
             key={i}
             points={points}
             fill="none"
-            stroke="rgba(255, 0, 0, 0.25)"
+            // stroke="rgba(255, 0, 0, 0.25)"
           />
           <text
             ref={(el) => {
@@ -246,7 +252,7 @@ function Sides() {
               fontWeight: 500,
             }}
           >
-            10 cm
+            {label}
           </text>
         </>
       );
