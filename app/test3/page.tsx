@@ -65,7 +65,7 @@ const CanvasContext = createContext<{
   };
 }>(null!);
 
-function Cuboid(props: Props) {
+export function Cuboid(props: Props) {
   const [hydrated, setHydrated] = useState(false);
 
   const initialScene = createInitialScene(props);

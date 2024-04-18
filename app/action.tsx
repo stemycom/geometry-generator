@@ -12,7 +12,8 @@ import {
   runOpenAICompletion,
 } from "@/lib/utils";
 import { Polygon } from "@/components/polygon";
-import { polygonDrawPrompt, drawCylinder } from "./ai-function-prompts";
+import { polygonDrawPrompt, cuboidDrawPrompt } from "./ai-function-prompts";
+import { Cuboid } from "./test3/page";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -121,7 +122,7 @@ Messages inside [] means that it's a UI element or a user event. For example:
         name: info.name,
       })),
     ],
-    functions: [polygonDrawPrompt, drawCylinder],
+    functions: [polygonDrawPrompt, cuboidDrawPrompt],
     temperature: 0.1,
   });
 
@@ -151,23 +152,10 @@ Messages inside [] means that it's a UI element or a user event. For example:
     ]);
   });
 
-  completion.onFunctionCall("draw_cylinder", async (props) => {
-    const { lines, ellipses } = props;
-
+  completion.onFunctionCall("draw_cuboid", async (props) => {
     reply.done(
       <div>
-        <svg width="300" height="200">
-          {/* {paths?.map((path) => (
-            <path d={path} stroke="black" strokeWidth="2" fill="none" />
-          ))} */}
-          {ellipses?.map((ellipse) => (
-            <ellipse {...ellipse} stroke="black" strokeWidth="2" fill="none" />
-          ))}
-          {lines?.map((side) => (
-            <line {...side} stroke="black" strokeWidth="2" />
-          ))}
-        </svg>
-        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
+        <Cuboid {...props} />
       </div>
     );
 
