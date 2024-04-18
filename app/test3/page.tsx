@@ -136,9 +136,121 @@ function Geometry({ size = { width: 300, height: 200 } }) {
         <Faces />
         <CornerVerts />
         <Gizmos />
+        <Sides />
       </motion.svg>
     </CanvasContext.Provider>
   );
+}
+
+function Sides() {
+  const sidesRef = useRef<SVGPolylineElement[]>([]);
+  const labelRefs = useRef<SVGTextElement[]>([]);
+  const { cuboid } = useGeometry();
+
+  cuboid.vertices.on("change", updateSides);
+
+  function updateSides() {
+    const sides = getIndexes().map(calculateSides);
+    sides.forEach(({ points, transform, x, y, textAnchor }, i) => {
+      const side = sidesRef.current[i];
+      side.setAttribute("points", points);
+
+      const label = labelRefs.current[i];
+      label.setAttribute("x", x.toString());
+      label.setAttribute("y", y.toString());
+      label.setAttribute("transform", transform);
+      label.setAttribute("text-anchor", textAnchor);
+    });
+  }
+
+  function getIndexes() {
+    return [
+      [2, 3],
+      [7, 2],
+      [1, 3],
+    ] as [number, number][];
+  }
+
+  function calculateSides(indexes: [number, number]) {
+    const offset = 15;
+    const verts = cuboid.vertices.get();
+    const a = verts[indexes[0]];
+    const b = verts[indexes[1]];
+    const center = getCentroid(...verts);
+
+    const offsetPoints = [a, b].map((p) => {
+      // Calculate the direction vector components from center to the point
+      const dirX = p.x - center.x;
+      const dirY = p.y - center.y;
+
+      // Calculate the magnitude (length) of the direction vector
+      const magnitude = Math.sqrt(dirX * dirX + dirY * dirY);
+
+      // Normalize the direction vector
+      const normX = dirX / magnitude;
+      const normY = dirY / magnitude;
+
+      // Calculate the new points by moving the vertex along the normalized direction by the offset
+      const x = p.x + normX * offset;
+      const y = p.y + normY * offset;
+
+      // Calculate the angle of the direction vector
+
+      return { x, y };
+    });
+
+    const angle = Math.atan2(b.y - a.y, b.x - a.x);
+    const angleInDegrees = (angle * 180) / Math.PI;
+
+    const { x, y } = getCentroid(...offsetPoints);
+
+    const distance = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+    const transform =
+      distance > 45
+        ? `rotate(${angleInDegrees} ${x} ${y})`
+        : "translate(-5, 0)";
+
+    const textAnchor = distance > 45 ? "middle" : "start";
+
+    const points = offsetPoints.map(({ x, y }) => `${x},${y}`).join(" ");
+
+    return { points, transform, x, y, textAnchor };
+  }
+
+  return getIndexes()
+    .map(calculateSides)
+    .map(({ points, transform, x, y, textAnchor }, i) => {
+      return (
+        <>
+          <polyline
+            ref={(el) => {
+              sidesRef.current[i] = el!;
+            }}
+            key={i}
+            points={points}
+            fill="none"
+            stroke="rgba(255, 0, 0, 0.25)"
+          />
+          <text
+            ref={(el) => {
+              labelRefs.current[i] = el!;
+            }}
+            x={x}
+            y={y}
+            transform={transform}
+            dominantBaseline="middle"
+            textAnchor={textAnchor}
+            style={{
+              fill: "#475569",
+              fontSize: ".6rem",
+              fontWeight: 500,
+            }}
+          >
+            10 cm
+          </text>
+        </>
+      );
+    });
 }
 
 type DiagonalType = "base" | "front" | "body";
