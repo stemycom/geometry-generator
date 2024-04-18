@@ -595,8 +595,8 @@ function CornerVerts() {
       }}
       fontSize={10}
     >
-      {i}
-      {/* {String.fromCharCode(65 + i)} */}
+      {/* {i} */}
+      {String.fromCharCode(65 + i)}
     </text>
   ));
 }
