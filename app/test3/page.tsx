@@ -141,8 +141,14 @@ export function Cuboid(props: Props) {
           userSelect: "none",
           //@ts-ignore
           "-webkit-user-select": "none",
+          fontFamily:
+            "ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+          color: "#94a3b8",
         }}
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
       >
         <Diagonals types={props.diagonals} />
         {/* <Wireframe /> */}
