@@ -47,7 +47,7 @@ const Shape = forwardRef<
 
   return (
     <mesh ref={meshRef}>
-      <boxGeometry args={[size[0], size[1], 1]} />
+      <boxGeometry args={[size[0], 1, size[1]]} />
     </mesh>
   );
 });
@@ -141,7 +141,7 @@ export function Cuboid(props: Props) {
         {/* <Wireframe /> */}
         <Faces />
         <CornerVerts />
-        <Gizmos />
+        <Gizmos size={props.size} />
         <Sides />
       </motion.svg>
     </CanvasContext.Provider>
@@ -343,7 +343,7 @@ function Diagonals({ types }: { types: DiagonalType[] }) {
     ));
 }
 
-function Gizmos() {
+function Gizmos({ size }: { size: Props["size"] }) {
   const { cuboid, setOrbitControllerProps } = useGeometry();
   const xScaleElRef = useRef<SVGCircleElement>(null!);
   const zScaleElRef = useRef<SVGCircleElement>(null!);
@@ -376,8 +376,8 @@ function Gizmos() {
   const disable = () => setOrbitControllerProps({ enabled: false });
 
   const scale = useRef({
-    x: 1,
-    z: 1,
+    x: size[0],
+    z: size[1],
     runningX: 0,
     runningZ: 0,
   });
@@ -688,7 +688,7 @@ function createInitialScene(props: Props) {
   camera.updateProjectionMatrix();
 
   const scene = new THREE.Scene();
-  const geometry = new THREE.BoxGeometry(...props.size, 1);
+  const geometry = new THREE.BoxGeometry(props.size[0], 1, props.size[1]);
   const mesh = new THREE.Mesh(geometry);
   scene.add(mesh);
 
