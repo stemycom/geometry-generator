@@ -30,6 +30,7 @@ export default function Page() {
         size={[1, 1]}
         diagonals={["body"]}
         corners={["1", "2", "3", "4", "5", "6", "7", "8"]}
+        sides={["x", "y", true]}
       />
     </div>
   );
@@ -148,13 +149,13 @@ export function Cuboid(props: Props) {
         <Faces />
         <CornerVerts corners={props.corners} />
         <Gizmos size={props.size} />
-        <Sides />
+        <Sides sides={props.sides} />
       </motion.svg>
     </CanvasContext.Provider>
   );
 }
 
-function Sides() {
+function Sides({ sides }: { sides: Props["sides"] }) {
   const sidesRef = useRef<SVGPolylineElement[]>([]);
   const labelRefs = useRef<SVGTextElement[]>([]);
   const { cuboid } = useGeometry();
@@ -218,19 +219,27 @@ function Sides() {
     const { x, y } = getCentroid(...offsetPoints);
 
     const distance = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
-    const transform =
-      distance > 45
-        ? `rotate(${angleInDegrees} ${x} ${y})`
-        : "translate(-5, 0)";
-
-    const textAnchor = distance > 45 ? "middle" : "start";
 
     const points = offsetPoints.map(({ x, y }) => `${x},${y}`).join(" ");
 
     const geometry = cuboid.mesh.current.geometry as THREE.BoxGeometry;
     const { width, depth } = geometry.parameters;
 
-    const label = ([depth, width, 1][sideIndex] * 10).toFixed(0) + " cm";
+    let label: string;
+    if (sides?.[sideIndex] === true) {
+      label = ([depth, width, 1][sideIndex] * 10).toFixed(0) + " cm";
+    } else if (typeof sides?.[sideIndex] === "string") {
+      label = sides[sideIndex] as string;
+    } else {
+      label = "";
+    }
+
+    const small = distance < 45 || label.length < 2;
+    const textAnchor = small ? "start" : "middle";
+
+    const transform = small
+      ? "translate(0, 0)"
+      : `rotate(${angleInDegrees} ${x} ${y})`;
 
     return { points, transform, x, y, textAnchor, label };
   }
