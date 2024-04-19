@@ -179,8 +179,8 @@ function Sides({ sides }: { sides: Props["sides"] }) {
 
   function getIndexes() {
     return [
-      [2, 3],
       [7, 2],
+      [2, 3],
       [1, 3],
     ] as [number, number][];
   }
@@ -269,7 +269,7 @@ function Sides({ sides }: { sides: Props["sides"] }) {
             textAnchor={textAnchor}
             style={{
               fill: "#475569",
-              fontSize: ".6rem",
+              fontSize: 10,
               fontWeight: 500,
             }}
           >
@@ -614,11 +614,11 @@ function CornerVerts({ corners }: { corners: Props["corners"] }) {
       }}
       style={{
         fill: "#475569",
-        fontSize: ".6rem",
+        fontSize: 10,
         stroke: "none",
         textTransform: "uppercase",
         fontWeight: 500,
-        letterSpacing: "-0.05em",
+        letterSpacing: -0.8,
       }}
       fontSize={10}
     >
