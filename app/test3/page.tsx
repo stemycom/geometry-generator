@@ -19,18 +19,19 @@ import { OrbitControls } from "@react-three/drei";
 import { cuboidDrawPrompt } from "../ai-function-prompts";
 import { z } from "zod";
 
+const size = { width: 300, height: 200 };
+const zoom = 130;
 type Props = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
 
 export default function Page() {
   return (
-    <div className="w-full max-w-96 aspect-square bg-white">
-      <Cuboid size={[1, 0.75]} />
+    <div className="max-w-96 bg-white">
+      <Cuboid size={[1, 1]} />
     </div>
   );
 }
 
-const size = { width: 200, height: 200 };
-
+let logged = false;
 const Shape = forwardRef<
   THREE.Mesh,
   {
@@ -40,9 +41,10 @@ const Shape = forwardRef<
 >(({ onUpdate, size }, meshRef) => {
   useFrame((state) => {
     onUpdate({ state });
-    // if (!meshRef) return;
-    // //@ts-ignore
-    // const mesh = meshRef.current as THREE.Mesh;
+    if (!logged) {
+      console.log(state);
+      logged = true;
+    }
   }, 1);
 
   return (
@@ -96,9 +98,9 @@ export function Cuboid(props: Props) {
     >
       {hydrated && (
         <Canvas
-          style={{ display: !hydrated ? "none" : "block" }}
           orthographic
-          camera={{ position: [1, 1, 1.5], zoom: 200 }}
+          style={{ display: !hydrated ? "none" : "block" }}
+          camera={{ position: [1, 1, 1.5], zoom }}
           //frameloop="demand"
           gl={(canvas) => {
             const gl = new SVGRenderer();
@@ -127,7 +129,7 @@ export function Cuboid(props: Props) {
       )}
       <motion.svg
         ref={svgRef}
-        className="w-full max-w-96 aspect-square bg-white [grid-area:1/1] outline-none cursor-grab active:cursor-grabbing"
+        className="w-full bg-white [grid-area:1/1] outline-none cursor-grab active:cursor-grabbing"
         whileHover="containerHover"
         whileTap="containerHover"
         style={{
@@ -674,8 +676,8 @@ function createInitialScene(props: Props) {
   const camera = new THREE.OrthographicCamera(
     -192, // left
     192, // right
-    192, // top
-    -192, // bottom
+    128, // top
+    -128, // bottom
     1,
     1000
   );
@@ -684,7 +686,7 @@ function createInitialScene(props: Props) {
   camera.lookAt(0, 0, 0);
   camera.updateWorldMatrix(true, true);
 
-  camera.zoom = 200;
+  camera.zoom = zoom;
   camera.updateProjectionMatrix();
 
   const scene = new THREE.Scene();
@@ -713,7 +715,7 @@ function getVertPositions({
     vertex.applyMatrix4(mesh.matrixWorld);
     vertex.project(camera);
 
-    const x = vertex.x * 0.5 * size.height;
+    const x = vertex.x * 0.5 * size.width;
     const y = -vertex.y * 0.5 * size.height;
 
     vertPositions.push({ x, y });
