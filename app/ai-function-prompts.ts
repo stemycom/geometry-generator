@@ -123,11 +123,13 @@ export const cuboidDrawPrompt = {
   name: "draw_cuboid",
   description: `\
 Get the current paramaters for drawing a 3D cuboid. The shape will be drawn on the screen.
-Don't nessessarily add all the parameters (points, angles, corners, etc..) you can add one if you want. Try to keep it simple at first.`,
+Don't nessessarily add all the parameters (points, angles, corners, etc..) you can add one if you want. Try to keep it simple at first.
+Corner are ordered starting from the top face: [0, 1, 2, 3] and then the bottom face: [4, 5, 6, 7] they start from the bottom right and go counter clockwise.
+The body diagonal is [8, 1] indexes of the corners. eg. [false, 'A', false, false, false, false, false, 'B'] (this will show the body diagonal).`,
   parameters: z.object({
     size: z.array(z.union([z.number(), z.number()])).describe(
       `\
-The size of the cuboid. In the format of [width, depth]. eg. [1, 0.5] keep the width and depth between 0 and 1. Keep one of the values 1.
+The size of the cuboid. In the format of [width, depth]. eg. [1, 0.5] keep the width and depth between 0.1 and 2. Keep one of the values close to 1.
 The size will be translated to the user as 10cm x 5cm. So if the user asks for different sizes, you can use the same size but change the translation.`
     ),
     diagonals: z.array(z.enum(["base", "front", "body"])).optional().describe(`\
@@ -135,5 +137,11 @@ The diagonals to draw on the shape. The base diagonal is the diagonal on the bas
 The front diagonal is the diagonal on the front face of the cuboid.
 The body diagonal is the diagonal that goes through the cuboid from the top front to the bottom back.
 `),
+    corners: z.array(z.union([z.string(), z.boolean()])).optional().describe(`\
+A collection of marks to indicate a vertecies on the shape if asked. Use an array of strings: eg. ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+`),
+    sides: z.array(z.union([z.string(), z.boolean()])).optional().describe(`\
+A collection of marks to indicate a sides on the shape if asked. Use an array of strings: eg. ['x', 'y', 'z']
+If you need to show a side length, use a "true". The user will be shown calculated length. eg. [true, true, true] (this will show all three sides)`),
   }),
 };

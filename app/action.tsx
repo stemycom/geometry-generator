@@ -154,8 +154,9 @@ Messages inside [] means that it's a UI element or a user event. For example:
 
   completion.onFunctionCall("draw_cuboid", async (props) => {
     reply.done(
-      <div>
+      <div className="flex">
         <Cuboid {...props} />
+        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
       </div>
     );
 

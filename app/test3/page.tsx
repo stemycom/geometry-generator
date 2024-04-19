@@ -26,7 +26,11 @@ type Props = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
 export default function Page() {
   return (
     <div className="max-w-96 bg-white">
-      <Cuboid size={[1, 1]} diagonals={["front"]} />
+      <Cuboid
+        size={[1, 1]}
+        diagonals={["body"]}
+        corners={["1", "2", "3", "4", "5", "6", "7", "8"]}
+      />
     </div>
   );
 }
@@ -142,7 +146,7 @@ export function Cuboid(props: Props) {
         <Diagonals types={props.diagonals} />
         {/* <Wireframe /> */}
         <Faces />
-        <CornerVerts />
+        <CornerVerts corners={props.corners} />
         <Gizmos size={props.size} />
         <Sides />
       </motion.svg>
@@ -549,29 +553,36 @@ function Wireframe() {
   );
 }
 
-function CornerVerts() {
+function CornerVerts({ corners }: { corners: Props["corners"] }) {
   const { cuboid } = useGeometry();
   const textRefs = useRef<SVGTextElement[]>([]);
 
   cuboid.vertices.on("change", updateCornerLabels);
 
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
   function getCorners(verts: Point[]) {
     const center = getCentroid(...verts);
-    x.set(center.x);
-    y.set(center.y);
+
+    const orderMap = [0, 1, 4, 5, 2, 3, 6, 7];
+    const cornerLabelsReordered = orderMap.map((i) =>
+      corners?.[i] ? corners[i] : false
+    );
 
     return Array.from({ length: 8 }, (_, i) => {
       const p = verts[i];
       const x = p.x + (p.x - center.x) * 0.12;
       const y = p.y + (p.y - center.y) * 0.12;
+
+      const hasOwnLabel = typeof cornerLabelsReordered?.[i] === "string";
+      const label = hasOwnLabel
+        ? (cornerLabelsReordered?.[i] as string)
+        : String.fromCharCode(65 + orderMap[i]);
+
       return {
         x,
         y,
+        label,
       };
-    });
+    }).filter((_, i) => cornerLabelsReordered?.[i] !== false);
   }
 
   function updateCornerLabels(verts: Point[]) {
@@ -583,7 +594,7 @@ function CornerVerts() {
     });
   }
 
-  return getCorners(cuboid.vertices.get()).map((pos, i) => (
+  return getCorners(cuboid.vertices.get()).map(({ label, ...pos }, i) => (
     <text
       key={i}
       {...pos}
@@ -603,7 +614,7 @@ function CornerVerts() {
       fontSize={10}
     >
       {/* {i} */}
-      {String.fromCharCode(65 + i)}
+      {label}
     </text>
   ));
 }
