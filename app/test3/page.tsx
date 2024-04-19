@@ -26,7 +26,7 @@ type Props = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
 export default function Page() {
   return (
     <div className="max-w-96 bg-white">
-      <Cuboid size={[1, 1]} />
+      <Cuboid size={[1, 1]} diagonals={["front"]} />
     </div>
   );
 }
@@ -139,7 +139,7 @@ export function Cuboid(props: Props) {
         }}
         viewBox={`${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`}
       >
-        <Diagonals types={["body"]} />
+        <Diagonals types={props.diagonals} />
         {/* <Wireframe /> */}
         <Faces />
         <CornerVerts />
@@ -267,9 +267,7 @@ function Sides() {
     });
 }
 
-type DiagonalType = "base" | "front" | "body";
-
-function Diagonals({ types }: { types: DiagonalType[] }) {
+function Diagonals({ types }: { types: Props["diagonals"] }) {
   const { cuboid, cameraRef } = useGeometry();
   const polylinesRef = useRef<SVGPolylineElement[]>([]);
 
@@ -316,7 +314,8 @@ function Diagonals({ types }: { types: DiagonalType[] }) {
     };
   }
 
-  function getIndexes(types: DiagonalType[]): [number, number][] {
+  function getIndexes(types: Props["diagonals"]): [number, number][] {
+    if (!types) return [];
     return types.map((type) => {
       switch (type) {
         case "base":
