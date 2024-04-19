@@ -138,7 +138,7 @@ The front diagonal is the diagonal on the front face of the cuboid.
 The body diagonal is the diagonal that goes through the cuboid from the top front to the bottom back.
 `),
     corners: z.array(z.union([z.string(), z.boolean()])).optional().describe(`\
-A collection of marks to indicate a vertecies on the shape if asked. Use an array of strings: eg. ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+A collection of marks to indicate a vertecies on the shape if asked. Use an array of strings: eg. ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] (Maximum of 8 corners)
 `),
     sides: z.array(z.union([z.string(), z.boolean()])).optional().describe(`\
 A collection of marks to indicate a sides on the shape if asked. Use an array of strings: eg. ['x', 'y', 'z']
