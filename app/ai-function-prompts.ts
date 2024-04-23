@@ -1,48 +1,5 @@
 import { z } from "zod";
 
-// export const drawSolidGeometry = {
-//   name: "draw_solid_geometry",
-//   description: `\
-// Get the current paramaters for drawing a 3D geometric shape. The shape will be drawn on the screen.
-// Keep in mind the bounds, so you dont draw outside width of 300 and height of 200. Try to use all of the space, but leave padding.
-// `,
-//   parameters: z.object({
-//     type: z.enum(["cylinder", "cone", "sphere", "cube", "pyramid", "prism"]),
-//     paths: z
-//       .array(z.string())
-//       .describe(
-//         `The paths to draw the shape. In SVG shape points format e.g. ["M20,230 Q40,205 50,230 T90,230", "M20,230 Q40,205 50,230 T90,230"]`
-//       )
-//       .optional(),
-//     lines: z
-//       .array(
-//         z.object({
-//           x1: z.number(),
-//           y1: z.number(),
-//           x2: z.number(),
-//           y2: z.number(),
-//         })
-//       )
-//       .describe(
-//         `Lines required to to draw the shape. In the svg line format eg. [{ "x1": 50, "y1": 50, "x2": 50, "y2": 150 }, { "x1": 250, "y1": 50, "x2": 250, "y2": 150 }]`
-//       )
-//       .optional(),
-//     ellipses: z
-//       .array(
-//         z.object({
-//           cx: z.number(),
-//           cy: z.number(),
-//           rx: z.number(),
-//           ry: z.number(),
-//         })
-//       )
-//       .describe(
-//         `The ellipses to to draw the shape. In the svg ellipse format eg. [{ "cx": 150, "cy": 50, "rx": 100, "ry": 50 }, { "cx": 150, "cy": 150, "rx": 100, "ry": 50 }]`
-//       )
-//       .optional(),
-//   }),
-// };
-
 export const drawCylinder = {
   name: "draw_cylinder",
   description: `\

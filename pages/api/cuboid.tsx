@@ -3,8 +3,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import ReactDOMServer from "react-dom/server";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const params = new URLSearchParams(req.url?.split("?")[1] || "");
   const props = {
-    size: (req.query.size as string) || "2,1",
+    size: (params.get("size") || "1,1").split(",").map(Number),
     diagonals: (req.query.diagonals as string | undefined)
       ?.split(",")
       .map(safeParseJson),
@@ -14,6 +15,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     sides: (req.query.sides as string | undefined)
       ?.split(",")
       .map(safeParseJson),
+    rotation: params.get("position")?.split(",").map(Number),
+    zoom: req.query.zoom ? Number(req.query.zoom) : undefined,
   };
 
   //   return res.json(props);

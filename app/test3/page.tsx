@@ -21,16 +21,32 @@ import { z } from "zod";
 
 const size = { width: 300, height: 200 };
 const zoom = 130;
-type Props = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
+interface CameraState {
+  rotation?: number[];
+  zoom?: number;
+}
+type CuboidInput = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
+type Props = CuboidInput &
+  CameraState & {
+    onCameraChange?: (cam: CameraState) => void;
+  };
+type CuboidState = CuboidInput & CameraState;
 
 export default function Page() {
+  const cuboidState = useRef<CuboidState>({
+    size: [2, 1],
+    diagonals: ["body"],
+    corners: ["1", "2", "3", "4", "5", "6", "7", "8"],
+    sides: ["x", "y", true],
+  });
+
   return (
     <div className="max-w-96 bg-white">
       <Cuboid
-        size={[1, 1]}
-        diagonals={["body"]}
-        corners={["1", "2", "3", "4", "5", "6", "7", "8"]}
-        sides={["x", "y", true]}
+        {...cuboidState.current}
+        onCameraChange={(cam) => {
+          cuboidState.current = { ...cuboidState.current, ...cam };
+        }}
       />
     </div>
   );
@@ -105,7 +121,12 @@ export function Cuboid(props: Props) {
         <Canvas
           orthographic
           style={{ display: !hydrated ? "none" : "block" }}
-          camera={{ position: [1, 1, 1.5], zoom }}
+          camera={{
+            position: (props.rotation as [number, number, number]) ?? [
+              1, 1, 1.5,
+            ],
+            zoom,
+          }}
           //frameloop="demand"
           gl={(canvas) => {
             const gl = new SVGRenderer();
@@ -117,7 +138,21 @@ export function Cuboid(props: Props) {
             return gl;
           }}
         >
-          <OrbitControls {...orbitControllerProps} zoomSpeed={0.4} />
+          <OrbitControls
+            {...orbitControllerProps}
+            zoomSpeed={0.4}
+            onChange={(ev) => {
+              if (!ev) return;
+              const camera = ev.target.object;
+              const pos = camera.position;
+              //@ts-ignore
+              const zoom = camera.zoom;
+              props.onCameraChange?.({
+                rotation: pos.toArray().map((v) => +v.toFixed(3)),
+                zoom,
+              });
+            }}
+          />
           <Shape
             ref={meshRef}
             size={props.size}
@@ -707,7 +742,8 @@ function createInitialScene(props: Props) {
     1000
   );
 
-  camera.position.set(1, 1, 1.5);
+  const position = props.rotation || [1, 1, 1.5];
+  camera.position.set(...(position as [number, number, number]));
   camera.lookAt(0, 0, 0);
   camera.updateWorldMatrix(true, true);
 
