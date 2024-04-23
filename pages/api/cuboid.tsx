@@ -15,11 +15,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     sides: (req.query.sides as string | undefined)
       ?.split(",")
       .map(safeParseJson),
-    rotation: params.get("position")?.split(",").map(Number),
+    rotation: params.get("rotation")?.split(",").map(Number),
     zoom: req.query.zoom ? Number(req.query.zoom) : undefined,
   };
 
-  //   return res.json(props);
+  // return res.json(props);
   const markup = ReactDOMServer.renderToStaticMarkup(<Cuboid {...props} />);
 
   res.setHeader("Content-Type", "image/svg+xml");

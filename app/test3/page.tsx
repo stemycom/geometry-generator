@@ -18,9 +18,13 @@ import { MotionValue, useMotionValue } from "framer-motion";
 import { OrbitControls } from "@react-three/drei";
 import { cuboidDrawPrompt } from "../ai-function-prompts";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { CopyIcon } from "@radix-ui/react-icons";
 
 const size = { width: 300, height: 200 };
-const zoom = 130;
+const defaultZoom = 130;
+const defaultRotation = [1, 1, 1.5];
+
 interface CameraState {
   rotation?: number[];
   zoom?: number;
@@ -33,21 +37,46 @@ type Props = CuboidInput &
 type CuboidState = CuboidInput & CameraState;
 
 export default function Page() {
-  const cuboidState = useRef<CuboidState>({
+  const params = useRef<CuboidState>({
     size: [2, 1],
     diagonals: ["body"],
     corners: ["1", "2", "3", "4", "5", "6", "7", "8"],
     sides: ["x", "y", true],
   });
+  const [copyLabel, setCopyLabel] = useState(false);
+
+  useEffect(() => {
+    if (!copyLabel) return;
+    const timeout = setTimeout(() => {
+      setCopyLabel(false);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [copyLabel]);
 
   return (
-    <div className="max-w-96 bg-white">
+    <div className="max-w-96 group relative">
       <Cuboid
-        {...cuboidState.current}
+        {...params.current}
         onCameraChange={(cam) => {
-          cuboidState.current = { ...cuboidState.current, ...cam };
+          params.current = { ...params.current, ...cam };
         }}
       />
+      <Button
+        size="sm"
+        className="absolute bottom-0 right-0 hidden group-hover:flex"
+        disabled={copyLabel}
+        onClick={(ev) => {
+          const queryParams = new URLSearchParams(params.current as any);
+          setCopyLabel(true);
+          if (ev.metaKey)
+            return window.open(`/cuboid.svg?${queryParams}`, "_blank");
+          const url = `/geometry/cuboid.svg?${queryParams}`;
+          const md = `![Image](${url})`;
+          navigator.clipboard.writeText(md);
+        }}
+      >
+        {!copyLabel ? <CopyIcon /> : "Copied!"}
+      </Button>
     </div>
   );
 }
@@ -122,10 +151,9 @@ export function Cuboid(props: Props) {
           orthographic
           style={{ display: !hydrated ? "none" : "block" }}
           camera={{
-            position: (props.rotation as [number, number, number]) ?? [
-              1, 1, 1.5,
-            ],
-            zoom,
+            position:
+              (props.rotation as [number, number, number]) ?? defaultRotation,
+            zoom: props.zoom ?? defaultZoom,
           }}
           //frameloop="demand"
           gl={(canvas) => {
@@ -149,7 +177,7 @@ export function Cuboid(props: Props) {
               const zoom = camera.zoom;
               props.onCameraChange?.({
                 rotation: pos.toArray().map((v) => +v.toFixed(3)),
-                zoom,
+                zoom: Math.floor(zoom),
               });
             }}
           />
@@ -742,12 +770,12 @@ function createInitialScene(props: Props) {
     1000
   );
 
-  const position = props.rotation || [1, 1, 1.5];
+  const position = props.rotation || defaultRotation;
   camera.position.set(...(position as [number, number, number]));
   camera.lookAt(0, 0, 0);
   camera.updateWorldMatrix(true, true);
 
-  camera.zoom = zoom;
+  camera.zoom = props.zoom ?? defaultZoom;
   camera.updateProjectionMatrix();
 
   const scene = new THREE.Scene();
