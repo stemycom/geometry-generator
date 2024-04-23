@@ -1,4 +1,4 @@
-import { Cuboid } from "@/app/test3/page";
+import { Cuboid } from "@/app/test/page";
 import type { NextApiRequest, NextApiResponse } from "next";
 import ReactDOMServer from "react-dom/server";
 

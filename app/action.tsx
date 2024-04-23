@@ -13,7 +13,7 @@ import {
 } from "@/lib/utils";
 import { Polygon } from "@/components/polygon";
 import { polygonDrawPrompt, cuboidDrawPrompt } from "./ai-function-prompts";
-import { Cuboid } from "./test3/page";
+import { Cuboid } from "./test/page";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
