@@ -55,7 +55,7 @@ export default function Page() {
   }, [copyLabel]);
 
   return (
-    <div className="max-w-96 group relative">
+    <div className="max-w-96 group relative grid">
       <Cuboid
         {...params.current}
         onSizeChange={(size) => {
@@ -93,13 +93,7 @@ const Shape = forwardRef<
     onUpdate: (arg: { state: RootState }) => void;
   }
 >(({ onUpdate, size }, meshRef) => {
-  useFrame((state) => {
-    onUpdate({ state });
-    if (!logged) {
-      console.log(state);
-      logged = true;
-    }
-  }, 1);
+  useFrame((state) => onUpdate({ state }), 1);
 
   return (
     <mesh ref={meshRef}>
@@ -155,7 +149,6 @@ export function Cuboid(props: Props) {
       {hydrated && (
         <Canvas
           orthographic
-          style={{ display: !hydrated ? "none" : "block" }}
           camera={{
             position:
               (props.rotation as [number, number, number]) ?? defaultRotation,
@@ -203,7 +196,7 @@ export function Cuboid(props: Props) {
       )}
       <motion.svg
         ref={svgRef}
-        className="w-full bg-white [grid-area:1/1] outline-none cursor-grab active:cursor-grabbing"
+        className="w-full h-auto [grid-area:1/1] outline-none cursor-grab active:cursor-grabbing"
         whileHover="containerHover"
         whileTap="containerHover"
         style={{
@@ -321,38 +314,35 @@ function Sides({ sides }: { sides: Props["sides"] }) {
 
   return getIndexes()
     .map(calculateSides)
-    .map(({ points, transform, x, y, textAnchor, label }, i) => {
-      return (
-        <>
-          <polyline
-            ref={(el) => {
-              sidesRef.current[i] = el!;
-            }}
-            key={i}
-            points={points}
-            fill="none"
-            // stroke="rgba(255, 0, 0, 0.25)"
-          />
-          <text
-            ref={(el) => {
-              labelRefs.current[i] = el!;
-            }}
-            x={x}
-            y={y}
-            transform={transform}
-            dominantBaseline="middle"
-            textAnchor={textAnchor}
-            style={{
-              fill: "#475569",
-              fontSize: 10,
-              fontWeight: 500,
-            }}
-          >
-            {label}
-          </text>
-        </>
-      );
-    });
+    .map(({ points, transform, x, y, textAnchor, label }, i) => [
+      <polyline
+        key={`p-${i}`}
+        ref={(el) => {
+          sidesRef.current[i] = el!;
+        }}
+        points={points}
+        fill="none"
+        // stroke="rgba(255, 0, 0, 0.25)"
+      />,
+      <text
+        key={`t-${i}`}
+        ref={(el) => {
+          labelRefs.current[i] = el!;
+        }}
+        x={x}
+        y={y}
+        transform={transform}
+        dominantBaseline="middle"
+        textAnchor={textAnchor}
+        style={{
+          fill: "#475569",
+          fontSize: 10,
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </text>,
+    ]);
 }
 
 function Diagonals({ types }: { types: Props["diagonals"] }) {
