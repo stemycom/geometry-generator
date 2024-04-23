@@ -11,7 +11,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       .map(safeParseJson),
     corners: (req.query.corners as string | undefined)
       ?.split(",")
-      .map(safeParseJson),
+      .map(parseStringOrBoolean),
     sides: (req.query.sides as string | undefined)
       ?.split(",")
       .map(safeParseJson),
@@ -24,6 +24,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   res.setHeader("Content-Type", "image/svg+xml");
   return res.status(200).send(markup);
+}
+
+function parseStringOrBoolean(value: string) {
+  return value === "true" ? true : value === "false" ? false : value;
 }
 
 function safeParseJson(string: string) {

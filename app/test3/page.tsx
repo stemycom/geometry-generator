@@ -33,6 +33,7 @@ type CuboidInput = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
 type Props = CuboidInput &
   CameraState & {
     onCameraChange?: (cam: CameraState) => void;
+    onSizeChange?: (size: [number, number]) => void;
   };
 type CuboidState = CuboidInput & CameraState;
 
@@ -57,6 +58,9 @@ export default function Page() {
     <div className="max-w-96 group relative">
       <Cuboid
         {...params.current}
+        onSizeChange={(size) => {
+          params.current = { ...params.current, size };
+        }}
         onCameraChange={(cam) => {
           params.current = { ...params.current, ...cam };
         }}
@@ -110,6 +114,7 @@ const CanvasContext = createContext<{
       enabled: boolean;
     }>
   >;
+  onSizeChange: Props["onSizeChange"];
   cameraRef: MutableRefObject<Camera>;
   cuboid: {
     vertices: MotionValue<Point[]>;
@@ -143,6 +148,7 @@ export function Cuboid(props: Props) {
       value={{
         cameraRef,
         cuboid: { vertices, mesh: meshRef },
+        onSizeChange: props.onSizeChange,
         setOrbitControllerProps,
       }}
     >
@@ -427,7 +433,7 @@ function Diagonals({ types }: { types: Props["diagonals"] }) {
 }
 
 function Gizmos({ size }: { size: Props["size"] }) {
-  const { cuboid, setOrbitControllerProps } = useGeometry();
+  const { cuboid, setOrbitControllerProps, onSizeChange } = useGeometry();
   const xScaleElRef = useRef<SVGCircleElement>(null!);
   const zScaleElRef = useRef<SVGCircleElement>(null!);
 
@@ -486,6 +492,7 @@ function Gizmos({ size }: { size: Props["size"] }) {
         onPanEnd={() => {
           scale.current.x += scale.current.runningX;
           scale.current.runningX = 0;
+          onSizeChange?.([scale.current.x, scale.current.z]);
         }}
         initial={{ opacity: 0, scale: 0 }}
         style={{
@@ -521,6 +528,7 @@ function Gizmos({ size }: { size: Props["size"] }) {
         onPanEnd={() => {
           scale.current.z += scale.current.runningZ;
           scale.current.runningZ = 0;
+          onSizeChange?.([scale.current.x, scale.current.z]);
         }}
         initial={{ opacity: 0, scale: 0 }}
         style={{
