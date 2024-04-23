@@ -41,8 +41,7 @@ export default function Page() {
   const params = useRef<CuboidState>({
     size: [2, 1],
     diagonals: ["body"],
-    corners: ["1", "2", "3", "4", "5", "6", "7", "8"],
-    sides: ["x", "y", true],
+    sides: ["1", "2", "3"],
   });
   const [copyLabel, setCopyLabel] = useState(false);
 
@@ -295,7 +294,7 @@ function Sides({ sides }: { sides: Props["sides"] }) {
 
     let label: string;
     if (sides?.[sideIndex] === true) {
-      label = ([depth, width, 1][sideIndex] * 10).toFixed(0) + " cm";
+      label = ([width, depth, 1][sideIndex] * 10).toFixed(0) + " cm";
     } else if (typeof sides?.[sideIndex] === "string") {
       label = sides[sideIndex] as string;
     } else {
