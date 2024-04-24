@@ -1,13 +1,13 @@
 import {
   TAnyToolDefinitionArray,
   TToolDefinitionMap,
-} from '@/lib/utils/tool-definition';
-import { OpenAIStream } from 'ai';
-import type OpenAI from 'openai';
-import zodToJsonSchema from 'zod-to-json-schema';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import { z } from 'zod';
+} from "@/lib/utils/tool-definition";
+import { OpenAIStream } from "ai";
+import type OpenAI from "openai";
+import zodToJsonSchema from "zod-to-json-schema";
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { z } from "zod";
 
 const consumeStream = async (stream: ReadableStream) => {
   const reader = stream.getReader();
@@ -20,16 +20,16 @@ const consumeStream = async (stream: ReadableStream) => {
 export function runOpenAICompletion<
   T extends Omit<
     Parameters<typeof OpenAI.prototype.chat.completions.create>[0],
-    'functions'
+    "functions"
   >,
   const TFunctions extends TAnyToolDefinitionArray,
 >(
   openai: OpenAI,
   params: T & {
     functions: TFunctions;
-  },
+  }
 ) {
-  let text = '';
+  let text = "";
   let hasFunction = false;
 
   type TToolMap = TToolDefinitionMap<TFunctions>;
@@ -50,7 +50,7 @@ export function runOpenAICompletion<
         (await openai.chat.completions.create({
           ...rest,
           stream: true,
-          functions: functions.map(fn => ({
+          functions: functions.map((fn) => ({
             name: fn.name,
             description: fn.description,
             parameters: zodToJsonSchema(fn.parameters) as Record<
@@ -71,12 +71,12 @@ export function runOpenAICompletion<
             // this is necessary if someone uses a .default in their schema
             const zodSchema = functionsMap[functionCallPayload.name].parameters;
             const parsedArgs = zodSchema.safeParse(
-              functionCallPayload.arguments,
+              functionCallPayload.arguments
             );
 
             if (!parsedArgs.success) {
               throw new Error(
-                `Invalid function call in message. Expected a function call object`,
+                `Invalid function call in message. Expected a function call object`
               );
             }
 
@@ -84,37 +84,37 @@ export function runOpenAICompletion<
           },
           onToken(token) {
             text += token;
-            if (text.startsWith('{')) return;
+            if (text.startsWith("{")) return;
             onTextContent(text, false);
           },
           onFinal() {
             if (hasFunction) return;
             onTextContent(text, true);
           },
-        },
-      ),
+        }
+      )
     );
   })();
 
   return {
     onTextContent: (
-      callback: (text: string, isFinal: boolean) => void | Promise<void>,
+      callback: (text: string, isFinal: boolean) => void | Promise<void>
     ) => {
       onTextContent = callback;
     },
-    onFunctionCall: <TName extends TFunctions[number]['name']>(
+    onFunctionCall: <TName extends TFunctions[number]["name"]>(
       name: TName,
       callback: (
         args: z.output<
           TName extends keyof TToolMap
             ? TToolMap[TName] extends infer TToolDef
               ? TToolDef extends TAnyToolDefinitionArray[number]
-                ? TToolDef['parameters']
+                ? TToolDef["parameters"]
                 : never
               : never
             : never
-        >,
-      ) => void | Promise<void>,
+        >
+      ) => void | Promise<void>
     ) => {
       onFunctionCall[name] = callback;
     },
@@ -126,19 +126,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const formatNumber = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(value);
 
 export const runAsyncFnWithoutBlocking = (
-  fn: (...args: any) => Promise<any>,
+  fn: (...args: any) => Promise<any>
 ) => {
   fn();
 };
 
 export const sleep = (ms: number) =>
-  new Promise(resolve => setTimeout(resolve, ms));
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 // Fake data
 export function getStockPrice(name: string) {
@@ -148,3 +148,9 @@ export function getStockPrice(name: string) {
   }
   return total / 100;
 }
+
+export const spring = {
+  snappy: { type: "spring", stiffness: 2000, damping: 40, mass: 0.01 },
+  bouncy: { type: "spring", stiffness: 650, damping: 30, mass: 1 },
+  smooth: { type: "spring", stiffness: 550, damping: 32, mass: 0.05 },
+};

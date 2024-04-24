@@ -9,6 +9,7 @@ import { z } from "zod";
 import { AI } from "@/app/action";
 import { useAIState } from "ai/rsc";
 import { polygonDrawPrompt } from "@/app/ai-function-prompts";
+import { spring } from "@/lib/utils";
 
 type Props = z.infer<(typeof polygonDrawPrompt)["parameters"]>;
 
@@ -559,12 +560,6 @@ function getCentroid(...arr: Vector2[]): Vector2 {
 
   return [centroidX, centroidY];
 }
-
-const spring = {
-  snappy: { type: "spring", stiffness: 2000, damping: 40, mass: 0.01 },
-  bouncy: { type: "spring", stiffness: 650, damping: 30, mass: 1 },
-  smooth: { type: "spring", stiffness: 550, damping: 32, mass: 0.05 },
-};
 
 const isServer = typeof window === "undefined";
 type Vector2 = [number, number];
