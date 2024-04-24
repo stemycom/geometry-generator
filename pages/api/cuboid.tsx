@@ -14,7 +14,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       .map(parseStringOrBoolean),
     sides: (req.query.sides as string | undefined)
       ?.split(",")
-      .map(safeParseJson),
+      .map(parseStringOrBoolean),
     rotation: params.get("rotation")?.split(",").map(Number),
     zoom: req.query.zoom ? Number(req.query.zoom) : undefined,
   };
