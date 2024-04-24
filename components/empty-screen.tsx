@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { IconArrowRight } from "@/components/ui/icons";
 import { Polygon } from "./polygon";
-import { Cuboid } from "@/app/test/page";
+import { Cuboid } from "./cuboid";
 
 const exampleMessages = [
   "Draw a triangle.",
