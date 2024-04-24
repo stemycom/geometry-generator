@@ -21,8 +21,12 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { CopyIcon } from "@radix-ui/react-icons";
 
+export default function Page() {
+  return <Cuboid size={[2, 1]} />;
+}
+
 const size = { width: 300, height: 200 };
-const defaultZoom = 130;
+const defaultZoom = 100;
 const defaultRotation = [1, 1, 1.5];
 
 interface CameraState {
@@ -35,14 +39,9 @@ type Props = CuboidInput &
     onCameraChange?: (cam: CameraState) => void;
     onSizeChange?: (size: [number, number]) => void;
   };
-type CuboidState = CuboidInput & CameraState;
 
-export default function Page() {
-  const params = useRef<CuboidState>({
-    size: [2, 1],
-    diagonals: ["body"],
-    sides: ["1", "2", "3"],
-  });
+export function Cuboid(_props: Props) {
+  const [props, setProps] = useState(_props);
   const [copyLabel, setCopyLabel] = useState(false);
 
   useEffect(() => {
@@ -54,22 +53,51 @@ export default function Page() {
   }, [copyLabel]);
 
   return (
-    <div className="max-w-96 group relative grid">
-      <Cuboid
-        {...params.current}
-        onSizeChange={(size) => {
-          params.current = { ...params.current, size };
-        }}
-        onCameraChange={(cam) => {
-          params.current = { ...params.current, ...cam };
+    <Interactions render={!isServer} params={props}>
+      <CuboidInternals
+        {...props}
+        onSizeChange={(size) => setProps((p) => ({ ...p, size }))}
+        onCameraChange={(change) => {
+          let changes: CameraState = {};
+          if (change.zoom !== defaultZoom) changes.zoom = change.zoom;
+          if (change.rotation !== defaultRotation)
+            changes.rotation = change.rotation;
+          setProps((p) => ({ ...p, ...changes }));
         }}
       />
+    </Interactions>
+  );
+}
+
+function Interactions({
+  render,
+  children,
+  params,
+}: {
+  render: boolean;
+  children: any;
+  params: Props;
+}) {
+  const [copyLabel, setCopyLabel] = useState(false);
+
+  useEffect(() => {
+    if (!copyLabel) return;
+    const timeout = setTimeout(() => {
+      setCopyLabel(false);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [copyLabel]);
+
+  if (!render) return children;
+  return (
+    <div className="relative inline-block group">
+      {children}
       <Button
         size="sm"
         className="absolute bottom-0 right-0 hidden group-hover:flex"
         disabled={copyLabel}
         onClick={(ev) => {
-          const queryParams = new URLSearchParams(params.current as any);
+          const queryParams = new URLSearchParams(params as any);
           setCopyLabel(true);
           if (ev.metaKey)
             return window.open(`/cuboid.svg?${queryParams}`, "_blank");
@@ -84,7 +112,6 @@ export default function Page() {
   );
 }
 
-let logged = false;
 const Shape = forwardRef<
   THREE.Mesh,
   {
@@ -115,7 +142,7 @@ const CanvasContext = createContext<{
   };
 }>(null!);
 
-export function Cuboid(props: Props) {
+export function CuboidInternals(props: Props) {
   const [hydrated, setHydrated] = useState(false);
 
   const initialScene = createInitialScene(props);
@@ -148,6 +175,7 @@ export function Cuboid(props: Props) {
       {hydrated && (
         <Canvas
           orthographic
+          style={{ ...size }}
           camera={{
             position:
               (props.rotation as [number, number, number]) ?? defaultRotation,
@@ -195,13 +223,13 @@ export function Cuboid(props: Props) {
       )}
       <motion.svg
         ref={svgRef}
-        className="w-full h-auto [grid-area:1/1] outline-none cursor-grab active:cursor-grabbing"
+        {...size}
         whileHover="containerHover"
         whileTap="containerHover"
         style={{
+          outline: "none",
           userSelect: "none",
-          //@ts-ignore
-          "-webkit-user-select": "none",
+          WebkitUserSelect: "none",
           fontFamily:
             "ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
           color: "#94a3b8",
@@ -335,7 +363,7 @@ function Sides({ sides }: { sides: Props["sides"] }) {
         textAnchor={textAnchor}
         style={{
           fill: "#475569",
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: 500,
         }}
       >
@@ -680,13 +708,12 @@ function CornerVerts({ corners }: { corners: Props["corners"] }) {
       }}
       style={{
         fill: "#475569",
-        fontSize: 10,
+        fontSize: 11,
         stroke: "none",
         textTransform: "uppercase",
         fontWeight: 500,
         letterSpacing: -0.8,
       }}
-      fontSize={10}
     >
       {/* {i} */}
       {label}
@@ -759,10 +786,10 @@ function Faces() {
 
 function createInitialScene(props: Props) {
   const camera = new THREE.OrthographicCamera(
-    -192, // left
-    192, // right
-    128, // top
-    -128, // bottom
+    size.width / -2, // left
+    size.width / 2, // right
+    size.height / 2, // top
+    size.height / -2, // bottom
     1,
     1000
   );
@@ -830,3 +857,5 @@ function getCentroid(...arr: Point[]): Point {
 
   return { x: centroidX, y: centroidY };
 }
+
+const isServer = typeof window === "undefined";

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { IconArrowRight } from "@/components/ui/icons";
 import { Polygon } from "./polygon";
+import { Cuboid } from "@/app/test/page";
 
 const exampleMessages = [
   "Draw a triangle.",
@@ -35,9 +36,7 @@ export function EmptyScreen({
             </Button>
           ))}
         </div>
-        <Polygon points="50,150 250,50 250,150" corners={["A", "B", "C"]} />
-        <Polygon points="50,150 250,50 250,150" angles={["x", true, true]} />
-        <Polygon points="50,150 250,50 250,150" sides={["a", "b", "c"]} />
+        <Cuboid size={[2, 1]} sides={[true, true, true]} />
         <Polygon
           points="50,150 250,50 250,150"
           angles={[false, false, true]}
