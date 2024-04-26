@@ -1,7 +1,7 @@
 "use client";
 
-import { Cuboid } from "@/components/cuboid";
+import { Sphere } from "@/components/sphere";
 
 export default function Page() {
-  return <Cuboid size={[2, 1]} />;
+  return <Sphere points="1,1 2,2" />;
 }
