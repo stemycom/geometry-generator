@@ -36,29 +36,22 @@ type Props = CuboidInput &
     onSizeChange?: (size: [number, number]) => void;
   };
 
-export function Cuboid(_props: Props) {
-  const [props, setProps] = useState(_props);
-  const [copyLabel, setCopyLabel] = useState(false);
-
-  useEffect(() => {
-    if (!copyLabel) return;
-    const timeout = setTimeout(() => {
-      setCopyLabel(false);
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [copyLabel]);
+export function Cuboid(props: Props) {
+  const [size, setSize] = useState(props.size);
+  const [zoom, setZoom] = useState(props.zoom);
+  const [rotation, setRotation] = useState(props.rotation);
 
   return (
-    <Interactions render={!isServer} params={props}>
+    <Interactions
+      render={!isServer}
+      params={{ ...props, size, zoom, rotation }}
+    >
       <CuboidInternals
         {...props}
-        onSizeChange={(size) => setProps((p) => ({ ...p, size }))}
-        onCameraChange={(change) => {
-          let changes: CameraState = {};
-          if (change.zoom !== defaultZoom) changes.zoom = change.zoom;
-          if (change.rotation !== defaultRotation)
-            changes.rotation = change.rotation;
-          setProps((p) => ({ ...p, ...changes }));
+        onSizeChange={setSize}
+        onCameraChange={({ zoom, rotation }) => {
+          if (zoom !== defaultZoom) setZoom(zoom);
+          if (rotation !== defaultRotation) setRotation(rotation);
         }}
       />
     </Interactions>
