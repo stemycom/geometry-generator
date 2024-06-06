@@ -2,51 +2,12 @@
 
 import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
 import { Cuboid } from "@/components/cuboid";
-import { useControls, Leva, folder } from "leva";
 import { z } from "zod";
 
 type Diagonals = z.infer<(typeof cuboidDrawPrompt)["parameters"]>["diagonals"];
 
 export default function Test2() {
-  const { body, front, base, depth, width, height } = useControls({
-    sides: folder(
-      {
-        width: { value: "", optional: true },
-        depth: { value: "", optional: true },
-        height: { value: "", optional: true },
-      },
-      { collapsed: true }
-    ),
-    corners: folder(
-      {
-        //all 8 corners
-        topLeft: { value: "", optional: true },
-        topRight: { value: "", optional: true },
-        bottomLeft: { value: "", optional: true },
-        bottomRight: { value: "", optional: true },
-        //top and bottom
-        top: { value: "", optional: true },
-        bottom: { value: "", optional: true },
-        //left and right
-        left: { value: "", optional: true },
-        right: { value: "", optional: true },
-      },
-      { collapsed: true }
-    ),
-    diagonals: folder(
-      {
-        body: false,
-        front: false,
-        base: false,
-      },
-      { collapsed: true }
-    ),
-  });
-
   const diagonals: Diagonals = [];
-  if (body) diagonals.push("body");
-  if (front) diagonals.push("front");
-  if (base) diagonals.push("base");
 
   function getSideValue(side: string | undefined): boolean | string {
     if (side === "") return true;
@@ -55,21 +16,13 @@ export default function Test2() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg my-16 bg-stone-500/5 p-2 rounded-3xl">
+    <div className="mx-auto w-full max-w-lg my-16 bg-[#F3F2F0] p-2 rounded-3xl">
       <div className="bg-white flex justify-center items-center p-2 rounded-2xl">
-        <Cuboid
-          size={[2, 1]}
-          sides={[
-            getSideValue(width),
-            getSideValue(depth),
-            getSideValue(height),
-          ]}
-          diagonals={diagonals}
-        />
+        <Cuboid size={[2, 1]} diagonals={diagonals} />
       </div>
       <div className="flex gap-1 p-2">
         <h2>Ruuttahukas</h2>
-        <Prop title="Diagonals">
+        <Prop title="Sides">
           {["width", "depth", "height"].map((side) => (
             <fieldset className="flex gap-5 items-center">
               <label
@@ -88,24 +41,47 @@ export default function Test2() {
           ))}
         </Prop>
         <Prop title="Corners">
-          {[{ label: "top" }, { label: "bottom" }].map((corner) => (
-            <fieldset className="flex gap-5 items-center">
-              <label
-                className="text-[13px] text-violet11 w-[75px]"
-                htmlFor={corner.label}
-              >
-                {corner.label}
-              </label>
-              <input type="checkbox" id={corner.label} />
-              <input
-                className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
-                id={corner.label}
-                placeholder="10 cm"
-              />
-            </fieldset>
+          {[
+            {
+              label: "top",
+              inputs: [
+                { label: "TL", value: "" },
+                { label: "TR", value: "" },
+                { label: "BL", value: "" },
+                { label: "BR", value: "" },
+              ],
+            },
+            {
+              label: "bottom",
+              inputs: [
+                { label: "TL", value: "" },
+                { label: "TR", value: "" },
+                { label: "BL", value: "" },
+                { label: "BR", value: "" },
+              ],
+            },
+          ].map(({ label, inputs }) => (
+            <div className="grid grid-cols-6 gap-1">
+              <p className="col-span-2">{label}</p>
+              {inputs.map(({ label, value }) => (
+                <fieldset>
+                  <input
+                    className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none text-center"
+                    id={label}
+                    placeholder="A"
+                  />
+                  <label
+                    className="text-[12px] text-slate-400 text-center w-full inline-block"
+                    htmlFor={label}
+                  >
+                    {label}
+                  </label>
+                </fieldset>
+              ))}
+            </div>
           ))}
         </Prop>
-        <Prop title="Sides">
+        <Prop title="Diagonals">
           {[{ label: "top" }, { label: "bottom" }].map((corner) => (
             <fieldset className="flex gap-5 items-center">
               <label
@@ -114,7 +90,7 @@ export default function Test2() {
               >
                 {corner.label}
               </label>
-              <input type="checkbox" id={corner.label} />
+              <input type="checkbox" checked id={corner.label} />
               <input
                 className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
                 id={corner.label}
@@ -125,7 +101,6 @@ export default function Test2() {
         </Prop>
       </div>
       <pre>{JSON.stringify(diagonals, null, 2)}</pre>
-      <Leva flat hideCopyButton titleBar={false} />
     </div>
   );
 }
