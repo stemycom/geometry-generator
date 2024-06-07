@@ -41,7 +41,7 @@ function PropsEditor({
   onChange: (props: CuboidProps) => void;
 }) {
   const sidesEnabled = Array.isArray(props.sides);
-  const [values, setValues] = useState<{
+  const [sideValues, setSideValues] = useState<{
     [key: string]: { enabled: boolean; value?: string };
   }>({
     width: { enabled: true },
@@ -49,8 +49,8 @@ function PropsEditor({
     height: { enabled: true },
   });
 
-  function getSideValues(newState?: typeof values): CuboidProps["sides"] {
-    const _values = newState ?? values;
+  function getSideValues(newState?: typeof sideValues): CuboidProps["sides"] {
+    const _values = newState ?? sideValues;
     return Object.values(_values).map(({ enabled, value }) => {
       if (!enabled) return false;
       return typeof value === "string" ? value : true;
@@ -67,7 +67,7 @@ function PropsEditor({
         }
         onDisable={() => onChange({ ...props, sides: undefined })}
       >
-        {Object.entries(values).map(([side, { enabled, value }]) => (
+        {Object.entries(sideValues).map(([side, { enabled, value }]) => (
           <fieldset className="flex gap-5 items-center">
             <label
               className="text-[13px] text-violet11 w-[75px]"
@@ -80,7 +80,7 @@ function PropsEditor({
               id={side}
               checked={enabled}
               onClick={() => {
-                setValues((values) => {
+                setSideValues((values) => {
                   const newState = {
                     ...values,
                     [side]: { enabled: !enabled, value },
@@ -96,7 +96,7 @@ function PropsEditor({
               disabled={!enabled}
               value={value}
               onChange={(e) => {
-                setValues((values) => {
+                setSideValues((values) => {
                   const newState = {
                     ...values,
                     [side]: { enabled: true, value: e.target.value },
