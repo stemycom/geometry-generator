@@ -4,18 +4,10 @@ import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
 import { Cuboid } from "@/components/cuboid";
 import { z } from "zod";
 
-type Diagonals = z.infer<(typeof cuboidDrawPrompt)["parameters"]>["diagonals"];
-
 export default function Test2() {
   const [props, setProps] = useState<CuboidProps>({
     size: [2, 1],
   });
-
-  function getSideValue(side: string | undefined): boolean | string {
-    if (side === "") return true;
-    if (side !== undefined) return side;
-    return false;
-  }
 
   return (
     <div className="mx-auto w-full max-w-lg my-16 bg-[#F3F2F0] p-2 rounded-3xl">
@@ -23,7 +15,7 @@ export default function Test2() {
         <Cuboid {...props} />
       </div>
       <div className="flex gap-1 p-2">
-        <h2>Ruuttahukas</h2>
+        <h2>Risttahukas</h2>
         <PropsEditor props={props} onChange={setProps} />
       </div>
       <pre className="text-xs">{JSON.stringify(props, null, 2)}</pre>
@@ -49,11 +41,45 @@ function PropsEditor({
     height: { enabled: true },
   });
 
+  const cornersEnabled = Array.isArray(props.corners);
+  const [cornerValues, setCornerValues] = useState([
+    {
+      label: "top",
+      inputs: [
+        { label: "TL", value: "A" },
+        { label: "TR", value: "B" },
+        { label: "BL", value: "C" },
+        { label: "BR", value: "D" },
+      ],
+    },
+    {
+      label: "bottom",
+      inputs: [
+        { label: "TL", value: "E" },
+        { label: "TR", value: "F" },
+        { label: "BL", value: "G" },
+        { label: "BR", value: "H" },
+      ],
+    },
+  ]);
+
   function getSideValues(newState?: typeof sideValues): CuboidProps["sides"] {
     const _values = newState ?? sideValues;
     return Object.values(_values).map(({ enabled, value }) => {
       if (!enabled) return false;
       return typeof value === "string" ? value : true;
+    });
+  }
+
+  function getCornerValues(
+    newState?: typeof cornerValues
+  ): CuboidProps["corners"] {
+    const _values = newState ?? cornerValues;
+    return _values.flatMap(({ inputs }) => {
+      return Object.values(inputs).map(({ value }) => {
+        if (value === "") return false;
+        return value;
+      });
     });
   }
 
@@ -110,41 +136,55 @@ function PropsEditor({
           </fieldset>
         ))}
       </PopoverEditor>
-      <PopoverEditor title="Corners">
-        {[
-          {
-            label: "top",
-            inputs: [
-              { label: "TL", value: "" },
-              { label: "TR", value: "" },
-              { label: "BL", value: "" },
-              { label: "BR", value: "" },
-            ],
-          },
-          {
-            label: "bottom",
-            inputs: [
-              { label: "TL", value: "" },
-              { label: "TR", value: "" },
-              { label: "BL", value: "" },
-              { label: "BR", value: "" },
-            ],
-          },
-        ].map(({ label, inputs }) => (
+      <PopoverEditor
+        title="Corners"
+        enabled={cornersEnabled}
+        onClick={() =>
+          !cornersEnabled && onChange({ ...props, corners: getCornerValues() })
+        }
+        onDisable={() => onChange({ ...props, corners: undefined })}
+      >
+        {cornerValues.map((section) => (
           <div className="grid grid-cols-6 gap-1">
-            <p className="col-span-2">{label}</p>
-            {inputs.map(({ label, value }) => (
+            <p className="col-span-2">{section.label}</p>
+            {section.inputs.map((input) => (
               <fieldset>
                 <input
                   className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none text-center"
-                  id={label}
-                  placeholder="A"
+                  id={input.label}
+                  value={input.value}
+                  onChange={(e) => {
+                    setCornerValues((values) => {
+                      const newState = values.map((prev) => {
+                        if (section.label === prev.label) {
+                          return {
+                            label: prev.label,
+                            inputs: prev.inputs.map((oldInput) => {
+                              if (oldInput.label === input.label) {
+                                return {
+                                  ...oldInput,
+                                  value: e.target.value,
+                                };
+                              }
+                              return oldInput;
+                            }),
+                          };
+                        }
+                        return prev;
+                      });
+                      onChange({
+                        ...props,
+                        corners: getCornerValues(newState),
+                      });
+                      return newState;
+                    });
+                  }}
                 />
                 <label
                   className="text-[12px] text-slate-400 text-center w-full inline-block"
-                  htmlFor={label}
+                  htmlFor={input.label}
                 >
-                  {label}
+                  {input.label}
                 </label>
               </fieldset>
             ))}
@@ -173,57 +213,10 @@ function PropsEditor({
   );
 }
 
-function SidesContent({ enabled, setEnabled }: any) {
-  const [values, setValues] = useState<{
-    [key: string]: { enabled: boolean; value?: string };
-  }>({
-    width: { enabled: true },
-    depth: { enabled: true },
-    height: { enabled: true },
-  });
-
-  return (
-    <PopoverEditor
-      title="Sides"
-      enabled={enabled}
-      onClick={() => !enabled && setEnabled(true)}
-      onDisable={() => setEnabled(false)}
-    >
-      {Object.entries(values).map(([side, { enabled, value }]) => (
-        <fieldset className="flex gap-5 items-center">
-          <label className="text-[13px] text-violet11 w-[75px]" htmlFor={side}>
-            {side}
-          </label>
-          <input
-            type="checkbox"
-            id={side}
-            checked={enabled}
-            onClick={() => {
-              setValues((values) => ({
-                ...values,
-                [side]: {
-                  enabled: !enabled,
-                  value,
-                },
-              }));
-            }}
-          />
-          <input
-            className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
-            id={side}
-            disabled={!enabled}
-            placeholder="10 cm"
-          />
-        </fieldset>
-      ))}
-    </PopoverEditor>
-  );
-}
-
 import * as Popover from "@radix-ui/react-popover";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 const PopoverEditor = ({
   title,
