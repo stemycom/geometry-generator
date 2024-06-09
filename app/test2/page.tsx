@@ -63,6 +63,11 @@ function PropsEditor({
     },
   ]);
 
+  const diagonalsEnabled = Array.isArray(props.diagonals);
+  const [diagonalValues, setDiagonalValues] = useState<
+    CuboidProps["diagonals"]
+  >(["base", "body", "front"]);
+
   function getSideValues(newState?: typeof sideValues): CuboidProps["sides"] {
     const _values = newState ?? sideValues;
     return Object.values(_values).map(({ enabled, value }) => {
@@ -191,20 +196,39 @@ function PropsEditor({
           </div>
         ))}
       </PopoverEditor>
-      <PopoverEditor title="Diagonals">
-        {[{ label: "top" }, { label: "bottom" }].map((corner) => (
+      <PopoverEditor
+        title="Diagonals"
+        enabled={diagonalsEnabled}
+        onClick={() =>
+          !diagonalsEnabled && onChange({ ...props, diagonals: diagonalValues })
+        }
+        onDisable={() => onChange({ ...props, diagonals: undefined })}
+      >
+        {(["base", "body", "front"] as const).map((diagonal) => (
           <fieldset className="flex gap-5 items-center">
             <label
               className="text-[13px] text-violet11 w-[75px]"
-              htmlFor={corner.label}
+              htmlFor={diagonal}
             >
-              {corner.label}
+              {diagonal}
             </label>
-            <input type="checkbox" checked id={corner.label} />
             <input
-              className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
-              id={corner.label}
-              placeholder="10 cm"
+              type="checkbox"
+              checked={
+                diagonalsEnabled ? diagonalValues?.includes(diagonal) : false
+              }
+              id={diagonal}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setDiagonalValues((values) => {
+                  const arr = values ? values : [];
+                  const newState = checked
+                    ? [...arr, diagonal]
+                    : arr.filter((value) => value !== diagonal);
+                  onChange({ ...props, diagonals: newState });
+                  return newState;
+                });
+              }}
             />
           </fieldset>
         ))}
