@@ -9,12 +9,43 @@ export default function Test2() {
     size: [2, 1],
   });
 
+  const [scope, animate] = useAnimate();
+
+  async function animateScope() {
+    await animate(
+      scope.current,
+      {
+        backdropFilter: "blur(10px) contrast(1.5)",
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+      },
+      {
+        duration: 0.001,
+      }
+    );
+    await animate(
+      scope.current,
+      {
+        backdropFilter: "blur(0px) contrast(1)",
+        backgroundColor: "rgba(255, 255, 255, 0)",
+      },
+      {
+        duration: 1.5,
+        ease: cubicBezier(0, 0.75, 0.25, 1),
+      }
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-lg my-16 bg-[#F3F2F0] p-2 rounded-3xl">
-      <div className="bg-white flex justify-center items-center p-2 rounded-2xl">
+      <div className="relative bg-white flex justify-center items-center p-2 rounded-2xl overflow-hidden">
         <Cuboid {...props} />
+        <div
+          ref={scope}
+          className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
+        />
       </div>
       <div className="flex gap-1 p-2">
+        <button onClick={() => animateScope()}>Toggle overlay</button>
         <h2>Risttahukas</h2>
         <PropsEditor props={props} onChange={setProps} />
       </div>
@@ -240,7 +271,12 @@ function PropsEditor({
 import * as Popover from "@radix-ui/react-popover";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import {
+  AnimatePresence,
+  cubicBezier,
+  motion,
+  useAnimate,
+} from "framer-motion";
 
 const PopoverEditor = ({
   title,
