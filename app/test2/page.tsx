@@ -37,15 +37,15 @@ export default function Test2() {
 
   return (
     <div className="mx-auto w-full max-w-lg my-16 bg-[#F3F2F0] p-1 rounded-3xl">
-      <div className="relative bg-white flex justify-center items-center p-2 rounded-2xl overflow-hidden">
+      <div className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden">
         <Cuboid {...props} />
         <div
           ref={scope}
           className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
         />
       </div>
-      <div className="flex gap-1 justify-center items-center pl-4 pt-2 pr-1 pb-1">
-        <h2>Risttahukas</h2>
+      <div className="flex gap-1 justify-center items-center pl-4 pt-2 pr-1 pb-2">
+        <h2>Risttahukas:</h2>
         <PropsEditor props={props} onChange={setProps} />
         <Button
           variant="secondary"

@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
 
-const size = { width: 300, height: 200 };
+const size = { width: 300, height: 250 };
 const defaultZoom = 100;
 const defaultRotation = [1, 1, 1.5];
 
@@ -32,6 +32,7 @@ interface CameraState {
 type CuboidInput = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
 type Props = CuboidInput &
   CameraState & {
+    className?: string;
     onCameraChange?: (cam: CameraState) => void;
     onSizeChange?: (size: [number, number]) => void;
   };
@@ -213,6 +214,7 @@ function CuboidInternals(props: Props) {
       <motion.svg
         ref={svgRef}
         {...size}
+        className={props.className}
         whileHover="containerHover"
         whileTap="containerHover"
         style={{
