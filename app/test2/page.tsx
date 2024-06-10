@@ -285,7 +285,7 @@ import {
   motion,
   useAnimate,
 } from "framer-motion";
-import { CopyIcon } from "@radix-ui/react-icons";
+import { CopyIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 
 const PopoverEditor = ({
@@ -326,7 +326,7 @@ const PopoverEditor = ({
           className="inline-block w-6 h-6 rounded-e-full hover:bg-slate-100"
           onClick={onDisable}
         >
-          x
+          <Cross2Icon className="w-3 ml-1" />
         </button>
       )}
     </motion.div>
