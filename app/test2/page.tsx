@@ -49,8 +49,8 @@ export default function Test2() {
             className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
           />
         </div>
-        <div className="flex gap-1 justify-center items-center pl-4 pt-2 pr-1 pb-2">
-          <h2>Risttahukas:</h2>
+        <div className="flex gap-[4px] justify-center items-center pl-4 pt-2 pr-1 pb-2">
+          <h2 className="text-stone-700 mr-2">Risttahukas:</h2>
           <PropsEditor props={props} onChange={setProps} />
           <Button
             variant="secondary"
@@ -229,7 +229,7 @@ function PropsEditor({
                   }}
                 />
                 <label
-                  className="text-[12px] text-slate-400 text-center w-full inline-block"
+                  className="text-[12px] text-zinc-400 text-center w-full inline-block"
                   htmlFor={input.label}
                 >
                   {input.label}
@@ -281,13 +281,8 @@ function PropsEditor({
 }
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
-import {
-  AnimatePresence,
-  cubicBezier,
-  motion,
-  useAnimate,
-} from "framer-motion";
+import { cn, spring } from "@/lib/utils";
+import { cubicBezier, motion, useAnimate } from "framer-motion";
 import { CopyIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -315,13 +310,14 @@ const PopoverEditor = ({
       style={{
         borderRadius: 99,
       }}
+      transition={spring.smooth}
       className={cn(
-        "flex bg-black/5 text-slate-600 tracking-wider text-xs h-6 font-medium",
-        enabled && "bg-white"
+        "flex items-center bg-stone-600/5 outline outline-[0.5px] outline-transparent hover:outline-stone-200 text-zinc-500 tracking-wider text-xs h-6 font-medium transition-colors duration-200 hover:transition-none hover:bg-white hover:text-zinc-500/80 p-[2px]",
+        enabled && "bg-white outline-zinc-300"
       )}
     >
       <PopoverTrigger
-        className={cn("uppercase px-3 py-1", enabled && "pr-0")}
+        className={cn("uppercase px-2 py-1 z-10", enabled && "pr-0 -mr-[1px]")}
         onClick={onClick}
         asChild
       >
@@ -330,19 +326,19 @@ const PopoverEditor = ({
         </motion.button>
       </PopoverTrigger>
       {enabled && (
-        <button
-          className="inline-block w-6 h-6 rounded-e-full hover:bg-slate-100"
+        <motion.button
+          initial={{ opacity: 0, scale: 0, x: 4 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={spring.smooth}
+          className="flex items-center justify-center h-full aspect-square hover:bg-zinc-100 rounded-full active:bg-zinc-200"
           onClick={onDisable}
         >
-          <Cross2Icon className="w-3 ml-1" />
-        </button>
+          <Cross2Icon className="w-3" />
+        </motion.button>
       )}
     </motion.div>
 
-    <PopoverContent
-      className="rounded p-5 w-[260px] bg-white  will-change-[transform,opacity] data-[state=open]:data-[side=top]:animate-slideDownAndFade data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=bottom]:animate-slideUpAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade"
-      sideOffset={5}
-    >
+    <PopoverContent>
       <div className="flex flex-col gap-2.5">
         <p className="text-mauve12 text-[15px] leading-[19px] font-medium mb-2.5">
           {title}
