@@ -171,7 +171,7 @@ function CuboidInternals(props: Props) {
               (props.rotation as [number, number, number]) ?? defaultRotation,
             zoom: props.zoom ?? defaultZoom,
           }}
-          //frameloop="demand"
+          // frameloop="demand"
           gl={(canvas) => {
             const gl = new SVGRenderer();
             gl.domElement = svgRef.current;
@@ -313,7 +313,8 @@ function Sides({ sides }: { sides: Props["sides"] }) {
 
     let label: string;
     if (sides?.[sideIndex] === true) {
-      label = ([width, depth, 1][sideIndex] * 10).toFixed(0) + " cm";
+      const side = [width, depth, 1][sideIndex];
+      label = formatSideLabel(side);
     } else if (typeof sides?.[sideIndex] === "string") {
       label = sides[sideIndex] as string;
     } else {
@@ -850,3 +851,7 @@ function getCentroid(...arr: Point[]): Point {
 }
 
 const isServer = typeof window === "undefined";
+
+export function formatSideLabel(size: number): string {
+  return (size * 10).toFixed(0) + " cm";
+}

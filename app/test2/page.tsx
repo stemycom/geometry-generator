@@ -1,7 +1,7 @@
 "use client";
 
 import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
-import { Cuboid } from "@/components/cuboid";
+import { Cuboid, formatSideLabel } from "@/components/cuboid";
 import { z } from "zod";
 
 export default function Test2() {
@@ -35,11 +35,15 @@ export default function Test2() {
     );
   }
 
+  function setSize([width, height]: [number, number]) {
+    setProps((prev) => ({ ...prev, size: [width, height] }));
+  }
+
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="w-full my-16 bg-[#F3F2F0] p-1 rounded-3xl">
         <div className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden">
-          <Cuboid {...props} />
+          <Cuboid {...props} onSizeChange={setSize} />
           <div
             ref={scope}
             className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
@@ -137,7 +141,7 @@ function PropsEditor({
         }
         onDisable={() => onChange({ ...props, sides: undefined })}
       >
-        {Object.entries(sideValues).map(([side, { enabled, value }]) => (
+        {Object.entries(sideValues).map(([side, { enabled, value }], index) => (
           <fieldset className="flex gap-5 items-center">
             <label
               className="text-[13px] text-violet11 w-[75px]"
@@ -175,7 +179,7 @@ function PropsEditor({
                   return newState;
                 });
               }}
-              placeholder="10 cm"
+              placeholder={formatSideLabel(index === 2 ? 1 : props.size[index])}
             />
           </fieldset>
         ))}
@@ -276,7 +280,6 @@ function PropsEditor({
   );
 }
 
-import * as Popover from "@radix-ui/react-popover";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -287,6 +290,11 @@ import {
 } from "framer-motion";
 import { CopyIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const PopoverEditor = ({
   title,
@@ -301,7 +309,7 @@ const PopoverEditor = ({
   enabled?: boolean;
   onDisable?: () => void;
 }) => (
-  <Popover.Root>
+  <Popover>
     <motion.div
       layout
       style={{
@@ -312,7 +320,7 @@ const PopoverEditor = ({
         enabled && "bg-white"
       )}
     >
-      <Popover.Trigger
+      <PopoverTrigger
         className={cn("uppercase px-3 py-1", enabled && "pr-0")}
         onClick={onClick}
         asChild
@@ -320,7 +328,7 @@ const PopoverEditor = ({
         <motion.button layout transition={{ duration: 0 }}>
           {title}
         </motion.button>
-      </Popover.Trigger>
+      </PopoverTrigger>
       {enabled && (
         <button
           className="inline-block w-6 h-6 rounded-e-full hover:bg-slate-100"
@@ -331,25 +339,16 @@ const PopoverEditor = ({
       )}
     </motion.div>
 
-    <Popover.Portal>
-      <Popover.Content
-        className="rounded p-5 w-[260px] bg-white  will-change-[transform,opacity] data-[state=open]:data-[side=top]:animate-slideDownAndFade data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=bottom]:animate-slideUpAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade"
-        sideOffset={5}
-      >
-        <div className="flex flex-col gap-2.5">
-          <p className="text-mauve12 text-[15px] leading-[19px] font-medium mb-2.5">
-            {title}
-          </p>
-          {children}
-        </div>
-        <Popover.Close
-          className="rounded-full h-[25px] w-[25px] inline-flex items-center justify-center text-violet11 absolute top-[5px] right-[5px] hover:bg-violet4 focus:shadow-[0_0_0_2px] focus:shadow-violet7 outline-none cursor-default"
-          aria-label="Close"
-        >
-          x
-        </Popover.Close>
-        <Popover.Arrow className="fill-white" />
-      </Popover.Content>
-    </Popover.Portal>
-  </Popover.Root>
+    <PopoverContent
+      className="rounded p-5 w-[260px] bg-white  will-change-[transform,opacity] data-[state=open]:data-[side=top]:animate-slideDownAndFade data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=bottom]:animate-slideUpAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade"
+      sideOffset={5}
+    >
+      <div className="flex flex-col gap-2.5">
+        <p className="text-mauve12 text-[15px] leading-[19px] font-medium mb-2.5">
+          {title}
+        </p>
+        {children}
+      </div>
+    </PopoverContent>
+  </Popover>
 );
