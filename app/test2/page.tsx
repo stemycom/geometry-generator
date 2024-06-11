@@ -136,17 +136,15 @@ function PropsEditor({
       <PopoverEditor
         title="Sides"
         enabled={sidesEnabled}
+        className="gap-1"
         onClick={() =>
           !sidesEnabled && onChange({ ...props, sides: getSideValues() })
         }
         onDisable={() => onChange({ ...props, sides: undefined })}
       >
         {Object.entries(sideValues).map(([side, { enabled, value }], index) => (
-          <fieldset className="flex gap-5 items-center">
-            <label
-              className="text-[13px] text-violet11 w-[75px]"
-              htmlFor={side}
-            >
+          <fieldset className="flex gap-3 py-1 hover:bg-gray-100 pr-4">
+            <label className="flex-1 pl-4" htmlFor={side}>
               {side}
             </label>
             <input
@@ -165,7 +163,7 @@ function PropsEditor({
               }}
             />
             <input
-              className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
+              className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none col-span-3"
               id={side}
               disabled={!enabled}
               value={value}
@@ -297,12 +295,14 @@ const PopoverEditor = ({
   onClick,
   enabled,
   onDisable,
+  className,
 }: {
   title: string;
   children: React.ReactNode;
   onClick?: () => void;
   enabled?: boolean;
   onDisable?: () => void;
+  className?: string;
 }) => (
   <Popover>
     <motion.div
@@ -312,7 +312,9 @@ const PopoverEditor = ({
       }}
       transition={spring.smooth}
       className={cn(
-        "flex items-center bg-stone-600/5 outline outline-[0.5px] outline-transparent hover:outline-stone-200 text-zinc-500 tracking-wider text-xs h-6 font-medium transition-colors duration-200 hover:transition-none hover:bg-white hover:text-zinc-500/80 p-[2px]",
+        "flex items-center bg-stone-600/10 outline outline-[0.5px] outline-transparent text-zinc-500 tracking-wider text-xs h-6 font-medium p-[2px]",
+        "hover:outline-stone-200 transition-colors duration-200 hover:transition-none",
+        !enabled && "hover:bg-black/10 hover:text-zinc-500 active:bg-white",
         enabled && "bg-white outline-zinc-300"
       )}
     >
@@ -338,9 +340,9 @@ const PopoverEditor = ({
       )}
     </motion.div>
 
-    <PopoverContent>
-      <div className="flex flex-col gap-2.5">
-        <p className="text-mauve12 text-[15px] leading-[19px] font-medium mb-2.5">
+    <PopoverContent className="px-0">
+      <div className={cn("flex flex-col gap-2.5", className)}>
+        <p className="text-mauve12 text-[15px] leading-[19px] font-medium mb-2.5 px-4">
           {title}
         </p>
         {children}
