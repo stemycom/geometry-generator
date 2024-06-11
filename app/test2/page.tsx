@@ -312,7 +312,7 @@ const PopoverEditor = ({
       }}
       transition={spring.smooth}
       className={cn(
-        "flex items-center bg-stone-600/10 outline outline-[0.5px] outline-transparent text-zinc-500 tracking-wider text-xs h-6 font-medium p-[2px]",
+        "flex items-center bg-stone-600/5 outline outline-[0.5px] outline-transparent text-zinc-500 tracking-wider text-xs h-6 font-medium p-[2px]",
         "hover:outline-stone-200 transition-colors duration-200 hover:transition-none",
         !enabled && "hover:bg-black/10 hover:text-zinc-500 active:bg-white",
         enabled && "bg-white outline-zinc-300"
