@@ -10,6 +10,7 @@ export default function Test2() {
   });
 
   const [scope, animate] = useAnimate();
+  const ref = useRef<HTMLDivElement>(null);
 
   async function animateScope() {
     await animate(
@@ -40,25 +41,22 @@ export default function Test2() {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto light">
       <div className="w-full my-16 bg-[#F3F2F0] p-1 rounded-3xl">
-        <div className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden">
+        <div
+          className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden"
+          ref={ref}
+        >
           <Cuboid {...props} onSizeChange={setSize} />
           <div
             ref={scope}
             className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
           />
         </div>
-        <div className="flex gap-[4px] justify-center items-center pl-4 pt-2 pr-1 pb-2">
+        <div className="flex gap-[4px] justify-center items-center pl-4 pt-2 pr-2 pb-2">
           <h2 className="text-stone-700 mr-2">Risttahukas:</h2>
           <PropsEditor props={props} onChange={setProps} />
-          <Button
-            variant="secondary"
-            className="ml-auto rounded-full"
-            onClick={() => animateScope()}
-          >
-            <CopyIcon />
-          </Button>
+          <DownloadButton scope={ref.current!} onClick={() => animateScope()} />
         </div>
       </div>
       <pre className="text-xs">{JSON.stringify(props, null, 2)}</pre>
@@ -278,16 +276,23 @@ function PropsEditor({
   );
 }
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { cn, spring } from "@/lib/utils";
 import { cubicBezier, motion, useAnimate } from "framer-motion";
-import { CopyIcon, Cross2Icon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  CopyIcon,
+  Cross2Icon,
+  DownloadIcon,
+  SizeIcon,
+} from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { DownloadButton } from "./download-button";
 
 const PopoverEditor = ({
   title,
@@ -314,7 +319,8 @@ const PopoverEditor = ({
       className={cn(
         "flex items-center bg-stone-600/5 outline outline-[0.5px] outline-transparent text-zinc-500 tracking-wider text-xs h-6 font-medium p-[2px]",
         "hover:outline-stone-200 transition-colors duration-200 hover:transition-none",
-        !enabled && "hover:bg-black/10 hover:text-zinc-500 active:bg-white",
+        !enabled &&
+          "hover:bg-black/10 hover:text-zinc-500 hover:active:bg-white active:transition-none",
         enabled && "bg-white outline-zinc-300"
       )}
     >
