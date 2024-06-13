@@ -16,8 +16,8 @@ export default function Test2() {
     await animate(
       scope.current,
       {
-        backdropFilter: "blur(10px) contrast(1.5)",
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        backdropFilter: "blur(10px) contrast(2)",
+        backgroundColor: "#bdbdbd",
       },
       {
         duration: 0.001,
@@ -27,10 +27,10 @@ export default function Test2() {
       scope.current,
       {
         backdropFilter: "blur(0px) contrast(1)",
-        backgroundColor: "rgba(255, 255, 255, 0)",
+        backgroundColor: "#ffffff0",
       },
       {
-        duration: 1.5,
+        duration: 1,
         ease: cubicBezier(0, 0.75, 0.25, 1),
       }
     );

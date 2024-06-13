@@ -19,7 +19,7 @@ import {
   CopyIcon,
   DownloadIcon,
 } from "@radix-ui/react-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 
 initWasm("./resvg.wasm");
@@ -32,6 +32,16 @@ const exportOptions = [
 ] as const;
 
 type ExportOption = (typeof exportOptions)[number];
+
+async function downloadFont() {
+  const font = await fetch("./Inter-Regular.woff2");
+  if (!font.ok) return null;
+  const fontData = await font.arrayBuffer();
+  return new Uint8Array(fontData);
+}
+
+let font: Uint8Array | null = null;
+let loadingFont = false;
 
 export function DownloadButton({
   onClick,
@@ -49,7 +59,16 @@ export function DownloadButton({
   ];
   const [size, setSize] = useState(sizes[1]);
 
+  useEffect(() => {
+    if (font) return;
+    loadingFont = true;
+    downloadFont().then((_font) => {
+      font = _font;
+    });
+  }, []);
+
   function download() {
+    const scope = document;
     const svg = scope.querySelector("svg") as SVGSVGElement;
     const svgString = svg.outerHTML;
     switch (exportOption) {
@@ -72,16 +91,23 @@ export function DownloadButton({
     navigator.clipboard.writeText(svgString);
   }
 
-  function copyPNG(svgString: string) {
+  function svgToPng(svgString: string) {
     const resvg = new Resvg(svgString, {
       fitTo: {
         mode: "width",
         value: size.width,
       },
+      font: {
+        fontBuffers: [font as Uint8Array], // New in 2.5.0, loading custom fonts
+      },
     });
     const pngData = resvg.render();
     const pngBuffer = pngData.asPng();
-    const blob = new Blob([pngBuffer], { type: "image/png" });
+    return new Blob([pngBuffer], { type: "image/png" });
+  }
+
+  function copyPNG(svgString: string) {
+    const blob = svgToPng(svgString);
     navigator.clipboard.write([
       new ClipboardItem({
         "image/png": blob,
@@ -90,15 +116,7 @@ export function DownloadButton({
   }
 
   function downloadPNG(svgString: string) {
-    const resvg = new Resvg(svgString, {
-      fitTo: {
-        mode: "width",
-        value: size.width,
-      },
-    });
-    const pngData = resvg.render();
-    const pngBuffer = pngData.asPng();
-    const blob = new Blob([pngBuffer], { type: "image/png" });
+    const blob = svgToPng(svgString);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
