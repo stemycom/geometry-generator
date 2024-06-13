@@ -147,9 +147,9 @@ export function DownloadButton({
   }
 
   return (
-    <div className="flex ml-auto items-center bg-foreground rounded-full pr-0.5">
+    <div className="flex ml-auto items-center bg-foreground rounded-full pr-0.5 hover:bg-black">
       <Button
-        className="rounded-full bg-transparent pr-3"
+        className="rounded-full bg-transparent hover:bg-transparent pr-3"
         onClick={() => {
           onClick();
           download();
