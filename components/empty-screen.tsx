@@ -1,7 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { IconArrowRight } from "@/components/ui/icons";
-import { Polygon } from "./polygon";
-import { Cuboid } from "./cuboid";
 
 const exampleMessages = [
   "Draw a cuboid with 2x1x1 dimensions.",
@@ -29,12 +26,12 @@ export function EmptyScreen({
             sides={["hüpotenuus", false, false]}
           /> */}
         </div>
-        <div className="mt-4 flex flex-col items-start space-y-2 mb-4">
+        <div className="mt-4 flex flex-col items-start space-y-1 mb-4">
           {exampleMessages.map((message, index) => (
             <Button
               key={index}
               variant="ghost"
-              className="h-auto text-wrap text-left shadow-none bg-white"
+              className="h-auto text-wrap text-left shadow-none bg-white rounded-3xl"
               onClick={async () => {
                 submitMessage(message);
               }}
