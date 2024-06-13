@@ -2,19 +2,24 @@
 
 import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
 import { Cuboid, formatSideLabel } from "@/components/cuboid";
+import { Polygon, PolygonProps } from "@/components/polygon";
 import { z } from "zod";
+
+const exampleText =
+  "I can help explain or visualize concepts related to geometry, including rounded shapes, but I can't directly modify the appearance of 3D models or their rendering styles to make edges appear rounded. However, if you're looking for a conceptual understanding or a mathematical description of a rounded cuboid.";
 
 export default function Test2() {
   const [cuboidProps, setCuboidProps] = useState<CuboidProps>({
     size: [2, 1],
   });
-  const [cuboidProps2, setCuboidProps2] = useState<CuboidProps>({
-    size: [1, 1],
+  const [polygonProps, setPolygonProps] = useState<PolygonProps>({
+    points: "50,150 250,150 200,50 100,50",
   });
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-2 my-16">
       <GeometryEditor
+        text={exampleText}
         type="cuboid"
         params={cuboidProps}
         onParamsChange={setCuboidProps}
@@ -26,14 +31,14 @@ export default function Test2() {
       </GeometryEditor>
 
       <GeometryEditor
-        type="cuboid"
-        params={cuboidProps2}
-        onParamsChange={setCuboidProps2}
+        type="polygon"
+        params={polygonProps}
+        onParamsChange={setPolygonProps}
       >
-        <Cuboid
-          {...cuboidProps2}
-          onSizeChange={(size) =>
-            setCuboidProps2((prev) => ({ ...prev, size }))
+        <Polygon
+          {...polygonProps}
+          onPointsChage={(points) =>
+            setPolygonProps((prev) => ({ ...prev, points }))
           }
         />
       </GeometryEditor>
@@ -54,8 +59,8 @@ type GeometryEditorProps = GeometryEditorBaseProps &
       }
     | {
         type: "polygon";
-        params: { points: number[][] };
-        onParamsChange: (props: { points: number[][] }) => void;
+        params: PolygonProps;
+        onParamsChange: (props: PolygonProps) => void;
       }
   );
 
@@ -63,12 +68,46 @@ function GeometryEditor({
   type,
   params,
   onParamsChange,
+  text,
   children,
 }: GeometryEditorProps) {
-  const [scope, animate] = useAnimate();
   const ref = useRef<HTMLDivElement>(null);
+  const { flashLayer, fireAnimation } = useFlashOverlayAnimation();
 
-  async function animateScope() {
+  function getPropsInputs() {
+    switch (type) {
+      case "cuboid":
+        return <PropsEditor props={params} onChange={onParamsChange} />;
+      case "polygon":
+        return null;
+    }
+  }
+
+  return (
+    <div className="w-full bg-card-backdrop p-1 rounded-3xl">
+      {text && <p className="text-stone-700 p-4">{text}</p>}
+      <div
+        className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden"
+        ref={ref}
+      >
+        {children}
+        <div
+          className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
+          ref={flashLayer}
+        />
+      </div>
+      <div className="flex gap-[4px] justify-center items-center pl-4 pt-2 pr-2 pb-2">
+        <h2 className="text-stone-700 mr-2 capitalize">{type}:</h2>
+        {getPropsInputs()}
+        <DownloadButton scope={ref.current!} onClick={() => fireAnimation()} />
+      </div>
+    </div>
+  );
+}
+
+function useFlashOverlayAnimation() {
+  const [scope, animate] = useAnimate();
+  async function fireAnimation() {
     await animate(
       scope.current,
       {
@@ -91,26 +130,7 @@ function GeometryEditor({
       }
     );
   }
-
-  return (
-    <div className="w-full my-16 bg-card-backdrop p-1 rounded-3xl">
-      <div
-        className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden"
-        ref={ref}
-      >
-        {children}
-        <div
-          ref={scope}
-          className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none"
-        />
-      </div>
-      <div className="flex gap-[4px] justify-center items-center pl-4 pt-2 pr-2 pb-2">
-        <h2 className="text-stone-700 mr-2">Risttahukas:</h2>
-        <PropsEditor props={params} onChange={onParamsChange} />
-        <DownloadButton scope={ref.current!} onClick={() => animateScope()} />
-      </div>
-    </div>
-  );
+  return { flashLayer: scope, fireAnimation };
 }
 
 type CuboidProps = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;

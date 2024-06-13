@@ -11,9 +11,11 @@ import { useAIState } from "ai/rsc";
 import { polygonDrawPrompt } from "@/app/ai-function-prompts";
 import { spring } from "@/lib/utils";
 
-type Props = z.infer<(typeof polygonDrawPrompt)["parameters"]>;
+export type PolygonProps = z.infer<(typeof polygonDrawPrompt)["parameters"]> & {
+  onPointsChage?: (points: string) => void;
+};
 
-export function Polygon(props: Props) {
+export function Polygon({ onPointsChage, ...props }: PolygonProps) {
   const [points, setPoints] = useState(
     () =>
       props.points
@@ -58,7 +60,13 @@ export function Polygon(props: Props) {
           <SideMarkings points={points} sides={props.sides} />
         )}
         {!isServer && (
-          <DragPoints points={points} onUpdate={(p) => setPoints(p)} />
+          <DragPoints
+            points={points}
+            onUpdate={(p) => {
+              setPoints(p);
+              onPointsChage?.(pointsToPath(p));
+            }}
+          />
         )}
       </motion.svg>
     </Interactions>
@@ -70,7 +78,7 @@ function CornerMarkings({
   corners,
 }: {
   points: Vector2[];
-  corners?: Props["corners"];
+  corners?: PolygonProps["corners"];
 }) {
   return (
     <g>
@@ -123,7 +131,7 @@ function SideMarkings({
   sides,
 }: {
   points: Vector2[];
-  sides?: Props["sides"];
+  sides?: PolygonProps["sides"];
 }) {
   const isClockwise = isDrawnClockwise(points);
 
@@ -323,7 +331,7 @@ function AngleArcs({
   angles,
 }: {
   points: Vector2[];
-  angles?: Props["angles"];
+  angles?: PolygonProps["angles"];
 }) {
   return points.map(([x, y], i) => {
     const lastIndex = points.length - 1;
