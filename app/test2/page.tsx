@@ -141,7 +141,10 @@ function PropsEditor({
         onDisable={() => onChange({ ...props, sides: undefined })}
       >
         {Object.entries(sideValues).map(([side, { enabled, value }], index) => (
-          <fieldset className="flex gap-3 py-1 hover:bg-gray-100 pr-4">
+          <fieldset
+            className="flex gap-3 py-1 hover:bg-gray-100 pr-4"
+            key={side}
+          >
             <label className="flex-1 pl-4" htmlFor={side}>
               {side}
             </label>
@@ -189,10 +192,10 @@ function PropsEditor({
         onDisable={() => onChange({ ...props, corners: undefined })}
       >
         {cornerValues.map((section) => (
-          <div className="grid grid-cols-6 gap-1">
+          <div className="grid grid-cols-6 gap-1" key={section.label}>
             <p className="col-span-2">{section.label}</p>
             {section.inputs.map((input) => (
-              <fieldset>
+              <fieldset key={input.label}>
                 <input
                   className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none text-center"
                   id={input.label}
@@ -244,7 +247,7 @@ function PropsEditor({
         onDisable={() => onChange({ ...props, diagonals: undefined })}
       >
         {(["base", "body", "front"] as const).map((diagonal) => (
-          <fieldset className="flex gap-5 items-center">
+          <fieldset className="flex gap-5 items-center" key={diagonal}>
             <label
               className="text-[13px] text-violet11 w-[75px]"
               htmlFor={diagonal}
@@ -279,14 +282,7 @@ function PropsEditor({
 import { useRef, useState } from "react";
 import { cn, spring } from "@/lib/utils";
 import { cubicBezier, motion, useAnimate } from "framer-motion";
-import {
-  ChevronDownIcon,
-  CopyIcon,
-  Cross2Icon,
-  DownloadIcon,
-  SizeIcon,
-} from "@radix-ui/react-icons";
-import { Button } from "@/components/ui/button";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import {
   Popover,
   PopoverContent,
