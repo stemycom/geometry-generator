@@ -17,29 +17,32 @@ export function EmptyScreen({
 }) {
   return (
     <div className="mx-auto max-w-2xl px-4">
-      <div className="rounded-lg border bg-background p-8 mb-4">
-        <h1 className="mb-2 text-lg font-semibold">Geometry!</h1>
+      <div className="rounded-3xl p-8 mb-4">
+        <h1 className="text-2xl sm:text-3xl tracking-tight font-semibold max-w-fit inline-block">
+          Math geometry generator
+        </h1>
+        <div className="grid">
+          {/* <Cuboid size={[2, 1]} sides={[true, true, true]} />
+          <Polygon
+            points="50,150 250,50 250,150"
+            angles={[false, false, true]}
+            sides={["hüpotenuus", false, false]}
+          /> */}
+        </div>
         <div className="mt-4 flex flex-col items-start space-y-2 mb-4">
           {exampleMessages.map((message, index) => (
             <Button
               key={index}
-              variant="link"
-              className="h-auto p-0 text-base"
+              variant="ghost"
+              className="h-auto text-wrap text-left shadow-none bg-white"
               onClick={async () => {
                 submitMessage(message);
               }}
             >
-              <IconArrowRight className="mr-2 text-muted-foreground" />
               {message}
             </Button>
           ))}
         </div>
-        <Cuboid size={[2, 1]} sides={[true, true, true]} />
-        <Polygon
-          points="50,150 250,50 250,150"
-          angles={[false, false, true]}
-          sides={["hüpotenuus", false, false]}
-        />
       </div>
     </div>
   );

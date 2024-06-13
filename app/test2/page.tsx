@@ -42,7 +42,7 @@ export default function Test2() {
 
   return (
     <div className="w-full max-w-lg mx-auto light">
-      <div className="w-full my-16 bg-[#F3F2F0] p-1 rounded-3xl">
+      <div className="w-full my-16 bg-card-backdrop p-1 rounded-3xl">
         <div
           className="relative bg-white flex justify-center items-center rounded-[1.25rem] overflow-hidden"
           ref={ref}
