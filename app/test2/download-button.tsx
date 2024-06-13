@@ -45,10 +45,10 @@ let loadingFont = false;
 
 export function DownloadButton({
   onClick,
-  scope = document,
+  scope,
 }: {
   onClick: () => void;
-  scope: Document | Element;
+  scope: Element;
 }) {
   const [exportOption, setExportOption] =
     useState<ExportOption>("download-png");
@@ -68,7 +68,6 @@ export function DownloadButton({
   }, []);
 
   function download() {
-    const scope = document;
     const svg = scope.querySelector("svg") as SVGSVGElement;
     const svgString = svg.outerHTML;
     switch (exportOption) {
