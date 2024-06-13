@@ -142,14 +142,11 @@ function PropsEditor({
       >
         {Object.entries(sideValues).map(([side, { enabled, value }], index) => (
           <fieldset
-            className="flex gap-3 py-1 hover:bg-gray-100 pr-4"
+            className="flex items-center gap-3 py-1 hover:bg-gray-100 pr-4"
             key={side}
           >
-            <label className="flex-1 pl-4" htmlFor={side}>
-              {side}
-            </label>
-            <input
-              type="checkbox"
+            <Label htmlFor={side}>{side}</Label>
+            <Checkbox
               id={side}
               checked={enabled}
               onClick={() => {
@@ -163,10 +160,10 @@ function PropsEditor({
                 });
               }}
             />
-            <input
-              className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none col-span-3"
+            <Input
               id={side}
               disabled={!enabled}
+              className="flex-1"
               value={value}
               onChange={(e) => {
                 setSideValues((values) => {
@@ -186,18 +183,24 @@ function PropsEditor({
       <PopoverEditor
         title="Corners"
         enabled={cornersEnabled}
+        className="pt-2"
         onClick={() =>
           !cornersEnabled && onChange({ ...props, corners: getCornerValues() })
         }
         onDisable={() => onChange({ ...props, corners: undefined })}
       >
         {cornerValues.map((section) => (
-          <div className="grid grid-cols-6 gap-1" key={section.label}>
-            <p className="col-span-2">{section.label}</p>
+          <div
+            className="grid items-baseline grid-cols-6 gap-1 px-4"
+            key={section.label}
+          >
+            <p className="col-span-2 text-xs uppercase tracking-wider">
+              {section.label}
+            </p>
             {section.inputs.map((input) => (
               <fieldset key={input.label}>
-                <input
-                  className="w-full inline-flex items-center justify-center flex-1 rounded px-2.5 text-[13px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[25px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none text-center"
+                <Input
+                  className="text-center"
                   id={input.label}
                   value={input.value}
                   onChange={(e) => {
@@ -228,7 +231,7 @@ function PropsEditor({
                   }}
                 />
                 <label
-                  className="text-[12px] text-zinc-400 text-center w-full inline-block"
+                  className="text-[10px] text-zinc-400 text-center w-full inline-block"
                   htmlFor={input.label}
                 >
                   {input.label}
@@ -246,34 +249,32 @@ function PropsEditor({
         }
         onDisable={() => onChange({ ...props, diagonals: undefined })}
       >
-        {(["base", "body", "front"] as const).map((diagonal) => (
-          <fieldset className="flex gap-5 items-center" key={diagonal}>
-            <label
-              className="text-[13px] text-violet11 w-[75px]"
-              htmlFor={diagonal}
+        <div>
+          {(["base", "body", "front"] as const).map((diagonal) => (
+            <fieldset
+              className="flex items-center hover:bg-gray-100 pl-4"
+              key={diagonal}
             >
-              {diagonal}
-            </label>
-            <input
-              type="checkbox"
-              checked={
-                diagonalsEnabled ? diagonalValues?.includes(diagonal) : false
-              }
-              id={diagonal}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setDiagonalValues((values) => {
-                  const arr = values ? values : [];
-                  const newState = checked
-                    ? [...arr, diagonal]
-                    : arr.filter((value) => value !== diagonal);
-                  onChange({ ...props, diagonals: newState });
-                  return newState;
-                });
-              }}
-            />
-          </fieldset>
-        ))}
+              <Checkbox
+                checked={
+                  diagonalsEnabled ? diagonalValues?.includes(diagonal) : false
+                }
+                id={diagonal}
+                onCheckedChange={(checked) => {
+                  setDiagonalValues((values) => {
+                    const arr = values ? values : [];
+                    const newState = checked
+                      ? [...arr, diagonal]
+                      : arr.filter((value) => value !== diagonal);
+                    onChange({ ...props, diagonals: newState });
+                    return newState;
+                  });
+                }}
+              />
+              <Label htmlFor={diagonal}>{diagonal}</Label>
+            </fieldset>
+          ))}
+        </div>
       </PopoverEditor>
     </>
   );
@@ -289,6 +290,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DownloadButton } from "./download-button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 
 const PopoverEditor = ({
   title,
@@ -343,12 +346,25 @@ const PopoverEditor = ({
     </motion.div>
 
     <PopoverContent className="px-0">
-      <div className={cn("flex flex-col gap-2.5", className)}>
-        <p className="text-mauve12 text-[15px] leading-[19px] font-medium mb-2.5 px-4">
-          {title}
-        </p>
-        {children}
-      </div>
+      <div className={cn("flex flex-col gap-2.5", className)}>{children}</div>
     </PopoverContent>
   </Popover>
 );
+
+function Label({
+  className,
+  children,
+  ...props
+}: React.LabelHTMLAttributes<HTMLLabelElement>) {
+  return (
+    <label
+      {...props}
+      className={cn(
+        "text-xs uppercase tracking-wider peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 px-4 py-2",
+        className
+      )}
+    >
+      {children}
+    </label>
+  );
+}
