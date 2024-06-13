@@ -134,7 +134,7 @@ function PropsEditor({
       <PopoverEditor
         title="Sides"
         enabled={sidesEnabled}
-        className="gap-1"
+        className="gap-1 w-56"
         onClick={() =>
           !sidesEnabled && onChange({ ...props, sides: getSideValues() })
         }
@@ -145,7 +145,9 @@ function PropsEditor({
             className="flex items-center gap-3 py-1 hover:bg-gray-100 pr-4"
             key={side}
           >
-            <Label htmlFor={side}>{side}</Label>
+            <Label htmlFor={side} className="pr-0">
+              {side}
+            </Label>
             <Checkbox
               id={side}
               checked={enabled}
