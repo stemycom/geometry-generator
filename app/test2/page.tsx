@@ -19,18 +19,6 @@ export default function Test2() {
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-2 my-16">
       <GeometryEditor
-        text={exampleText}
-        type="cuboid"
-        params={cuboidProps}
-        onParamsChange={setCuboidProps}
-      >
-        <Cuboid
-          {...cuboidProps}
-          onSizeChange={(size) => setCuboidProps((prev) => ({ ...prev, size }))}
-        />
-      </GeometryEditor>
-
-      <GeometryEditor
         type="polygon"
         params={polygonProps}
         onParamsChange={setPolygonProps}
@@ -40,6 +28,18 @@ export default function Test2() {
           onPointsChage={(points) =>
             setPolygonProps((prev) => ({ ...prev, points }))
           }
+        />
+      </GeometryEditor>
+
+      <GeometryEditor
+        text={exampleText}
+        type="cuboid"
+        params={cuboidProps}
+        onParamsChange={setCuboidProps}
+      >
+        <Cuboid
+          {...cuboidProps}
+          onSizeChange={(size) => setCuboidProps((prev) => ({ ...prev, size }))}
         />
       </GeometryEditor>
     </div>
@@ -79,7 +79,15 @@ function GeometryEditor({
       case "cuboid":
         return <PropsEditor props={params} onChange={onParamsChange} />;
       case "polygon":
-        return null;
+        return (
+          <>
+            <SideEditor
+              title="sides"
+              count={countSides(params.points)}
+              values={params.sides}
+            />
+          </>
+        );
     }
   }
 
@@ -103,6 +111,11 @@ function GeometryEditor({
       </div>
     </div>
   );
+}
+
+function countSides(path: string) {
+  const sides = path.split(" ").filter((s) => s.length > 0);
+  return sides.length;
 }
 
 function useFlashOverlayAnimation() {
@@ -134,6 +147,36 @@ function useFlashOverlayAnimation() {
 }
 
 type CuboidProps = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
+
+function SideEditor({
+  count,
+  values,
+  title,
+}: {
+  count: number;
+  values: CuboidProps["sides"];
+  title: string;
+}) {
+  const cornersEnabled = Array.isArray(values);
+  const [cornerValues, setCornerValues] = useState(
+    Array.from({ length: count }, (_, i) => i)
+  );
+
+  return (
+    <PopoverEditor
+      title={title}
+      enabled={cornersEnabled}
+      className="gap-1 w-56"
+      // onClick={() =>
+      //   !sidesEnabled && onChange({ ...props, sides: getSideValues() })
+      // }
+      // onDisable={() => onChange({ ...props, sides: undefined })}
+    >
+      asdjasn
+      {/* {Array.from} */}
+    </PopoverEditor>
+  );
+}
 
 function PropsEditor({
   props,
