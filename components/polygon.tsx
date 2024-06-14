@@ -157,7 +157,7 @@ function SideMarkings({
         const showLabel = sides?.[i] !== false;
         const label = hasCustomLabel
           ? (sides?.[i] as string)
-          : length.toFixed(0);
+          : formatSideLabel(length);
 
         const transform =
           label.length > 1
