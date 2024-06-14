@@ -5,6 +5,7 @@ import { Cuboid, formatSideLabel } from "@/components/cuboid";
 import {
   Polygon,
   PolygonProps,
+  calculateAngleLabels,
   calculateSideLabels,
 } from "@/components/polygon";
 import { z } from "zod";
@@ -86,9 +87,25 @@ function GeometryEditor({
         return (
           <>
             <SideEditor
+              title="angles"
+              count={countSides(params.points)}
+              values={params.angles}
+              placeHolders={calculateAngleLabels(params.points)}
+              labels={({ i }) => `angle ${i + 1}`}
+              onChange={(angles) => onParamsChange({ ...params, angles })}
+            />
+            {/* <SideEditor
+              title="corners"
+              count={countSides(params.points)}
+              values={params.sides}
+              placeHolders={calculateSideLabels(params.points)}
+              onChange={(sides) => onParamsChange({ ...params, sides })}
+            /> */}
+            <SideEditor
               title="sides"
               count={countSides(params.points)}
               values={params.sides}
+              labels={({ i }) => `side ${i + 1}`}
               placeHolders={calculateSideLabels(params.points)}
               onChange={(sides) => onParamsChange({ ...params, sides })}
             />
@@ -160,12 +177,14 @@ function SideEditor({
   title,
   onChange,
   placeHolders,
+  labels,
 }: {
   count: number;
   values: CuboidProps["sides"];
   title: string;
   onChange: (values: CuboidProps["sides"]) => void;
   placeHolders: string[];
+  labels: ({ i }: { i: number }) => string;
 }) {
   const cornersEnabled = Array.isArray(values);
   const inputCount = Math.max(count, values?.length ?? 0);
@@ -190,7 +209,7 @@ function SideEditor({
     <PopoverEditor
       title={title}
       enabled={cornersEnabled}
-      className="gap-0 w-56"
+      className="gap-0 w-60"
       onClick={() =>
         !cornersEnabled &&
         onChange(
@@ -206,10 +225,9 @@ function SideEditor({
             className="flex items-center gap-3 py-1 hover:bg-gray-100 pr-4"
             key={i}
           >
-            <Label
-              className="flex-[0.5] pr-0"
-              htmlFor={id}
-            >{`side ${i + 1}`}</Label>
+            <Label className="flex-[0.7] pr-0" htmlFor={id}>
+              {labels({ i })}
+            </Label>
             <Checkbox
               id={id}
               checked={enabled}

@@ -374,7 +374,7 @@ function AngleArcs({
 
     const showLabel = angles?.[i] !== false;
 
-    const angleLabel = Math.round(rawAngle) + "°";
+    const angleLabel = Math.round(rawAngle) + `°`;
     const showCustomLabel = typeof angles?.[i] === "string";
     const customLabel = angles?.[i] as string;
 
@@ -589,4 +589,22 @@ export function calculateSideLabels(path: string) {
     Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2))
   );
   return distances.map((distance) => formatSideLabel(distance));
+}
+
+function formatAngleLabel(angle: number) {
+  return `${angle.toFixed(0)}°`;
+}
+
+export function calculateAngleLabels(path: string) {
+  const points = pathToPoints(path);
+  const lastIndex = points.length - 1;
+  const triples = points.map((_, i) => [
+    points[i === 0 ? lastIndex : i - 1],
+    points[i],
+    points[i === lastIndex ? 0 : i + 1],
+  ]);
+  const rawAngles = triples.map(([p1, p2, p3]) =>
+    calculateCornerAngle(p1, p2, p3)
+  );
+  return rawAngles.map((angle) => formatAngleLabel(angle));
 }
