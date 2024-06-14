@@ -2,7 +2,11 @@
 
 import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
 import { Cuboid, formatSideLabel } from "@/components/cuboid";
-import { Polygon, PolygonProps } from "@/components/polygon";
+import {
+  Polygon,
+  PolygonProps,
+  calculateSideLabels,
+} from "@/components/polygon";
 import { z } from "zod";
 
 const exampleText =
@@ -85,6 +89,8 @@ function GeometryEditor({
               title="sides"
               count={countSides(params.points)}
               values={params.sides}
+              placeHolders={calculateSideLabels(params.points)}
+              onChange={(sides) => onParamsChange({ ...params, sides })}
             />
           </>
         );
@@ -152,28 +158,102 @@ function SideEditor({
   count,
   values,
   title,
+  onChange,
+  placeHolders,
 }: {
   count: number;
   values: CuboidProps["sides"];
   title: string;
+  onChange: (values: CuboidProps["sides"]) => void;
+  placeHolders: string[];
 }) {
   const cornersEnabled = Array.isArray(values);
-  const [cornerValues, setCornerValues] = useState(
-    Array.from({ length: count }, (_, i) => i)
+  const inputCount = Math.max(count, values?.length ?? 0);
+  const [sideValues, setSideValues] = useState<
+    { enabled: boolean; value: boolean | string }[]
+  >(
+    Array.from({ length: inputCount }, () => ({
+      enabled: true,
+      value: true,
+    }))
   );
+
+  function getValues(newState?: typeof sideValues): CuboidProps["sides"] {
+    const _values = newState ?? sideValues;
+    return _values.flatMap(({ enabled, value }) => {
+      if (!enabled) return false;
+      return typeof value === "string" ? value : true;
+    });
+  }
 
   return (
     <PopoverEditor
       title={title}
       enabled={cornersEnabled}
-      className="gap-1 w-56"
-      // onClick={() =>
-      //   !sidesEnabled && onChange({ ...props, sides: getSideValues() })
-      // }
-      // onDisable={() => onChange({ ...props, sides: undefined })}
+      className="gap-0 w-56"
+      onClick={() =>
+        !cornersEnabled &&
+        onChange(
+          sideValues.filter(({ enabled }) => enabled).map(({ value }) => value)
+        )
+      }
+      onDisable={() => onChange(undefined)}
     >
-      asdjasn
-      {/* {Array.from} */}
+      {sideValues.map(({ enabled, value }, i) => {
+        const id = `side-${i}`;
+        return (
+          <fieldset
+            className="flex items-center gap-3 py-1 hover:bg-gray-100 pr-4"
+            key={i}
+          >
+            <Label
+              className="flex-[0.5] pr-0"
+              htmlFor={id}
+            >{`side ${i + 1}`}</Label>
+            <Checkbox
+              id={id}
+              checked={enabled}
+              onClick={() => {
+                setSideValues((values) => {
+                  const newState = values.map((prev, _i) => {
+                    if (_i === i) {
+                      return {
+                        ...prev,
+                        enabled: !enabled,
+                      };
+                    }
+                    return prev;
+                  });
+                  onChange(getValues(newState));
+                  return newState;
+                });
+              }}
+            />
+            <Input
+              id={id}
+              disabled={!enabled}
+              className="flex-1"
+              value={typeof value === "string" ? value : undefined}
+              placeholder={placeHolders?.[i]}
+              onChange={(e) => {
+                setSideValues((values) => {
+                  const newState = values.map((prev, _i) => {
+                    if (_i === i) {
+                      return {
+                        ...prev,
+                        value: e.target.value,
+                      };
+                    }
+                    return prev;
+                  });
+                  onChange(getValues(newState));
+                  return newState;
+                });
+              }}
+            />
+          </fieldset>
+        );
+      })}
     </PopoverEditor>
   );
 }

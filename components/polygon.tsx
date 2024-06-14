@@ -16,12 +16,7 @@ export type PolygonProps = z.infer<(typeof polygonDrawPrompt)["parameters"]> & {
 };
 
 export function Polygon({ onPointsChage, ...props }: PolygonProps) {
-  const [points, setPoints] = useState(
-    () =>
-      props.points
-        .split(" ")
-        .map((point) => point.split(",").map(parseFloat)) as Vector2[]
-  );
+  const [points, setPoints] = useState(() => pathToPoints(props.points));
 
   const path = pointsToPath(points);
 
@@ -124,6 +119,12 @@ function CornerMarkings({
 
 function pointsToPath(points: Vector2[]): string {
   return points.map((point) => point.join(",")).join(" ");
+}
+
+function pathToPoints(path: string): Vector2[] {
+  return path
+    .split(" ")
+    .map((point) => point.split(",").map(parseFloat)) as Vector2[];
 }
 
 function SideMarkings({
@@ -571,3 +572,21 @@ function getCentroid(...arr: Vector2[]): Vector2 {
 
 const isServer = typeof window === "undefined";
 type Vector2 = [number, number];
+
+function formatSideLabel(distance: number) {
+  return `${distance.toFixed(0)} cm`;
+}
+
+export function calculateSideLabels(path: string) {
+  const points = pathToPoints(path);
+  //get point pairs
+  const pairs = points.map((point, index) => [
+    point,
+    points[(index + 1) % points.length],
+  ]);
+  //measure distance between each pair
+  const distances = pairs.map(([p1, p2]) =>
+    Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2))
+  );
+  return distances.map((distance) => formatSideLabel(distance));
+}
