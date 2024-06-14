@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
-import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 import { AI } from "./action";
 import { Header } from "@/components/header";
 import { Providers } from "@/components/providers";
+import Script from "next/script";
 
 const meta = {
   title: "AI RSC Demo",
@@ -71,7 +71,11 @@ export default function RootLayout({
             </div>
           </Providers>
         </AI>
-        <Analytics />
+        <Script
+          data-domain="geometry.stemy.com"
+          strategy="lazyOnload"
+          src="https://plausible.raimond.dev/js/script.js"
+        />
       </body>
     </html>
   );
