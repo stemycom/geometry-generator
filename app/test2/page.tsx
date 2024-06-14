@@ -1,10 +1,9 @@
 "use client";
 
-import { cuboidDrawPrompt } from "@/app/ai-function-prompts";
+import { cuboidDrawPrompt, polygonDrawPrompt } from "@/app/ai-function-prompts";
 import { Cuboid, formatSideLabel } from "@/components/cuboid";
 import {
   Polygon,
-  PolygonProps,
   calculateAngleLabels,
   calculateSideLabels,
 } from "@/components/polygon";
@@ -84,26 +83,31 @@ function GeometryEditor({
       case "cuboid":
         return <PropsEditor props={params} onChange={onParamsChange} />;
       case "polygon":
+        const sideCount = countSides(params.points);
         return (
           <>
             <SideEditor
               title="angles"
-              count={countSides(params.points)}
+              count={sideCount}
               values={params.angles}
               placeHolders={calculateAngleLabels(params.points)}
               labels={({ i }) => `angle ${i + 1}`}
               onChange={(angles) => onParamsChange({ ...params, angles })}
             />
-            {/* <SideEditor
+            <SideEditor
               title="corners"
-              count={countSides(params.points)}
-              values={params.sides}
-              placeHolders={calculateSideLabels(params.points)}
-              onChange={(sides) => onParamsChange({ ...params, sides })}
-            /> */}
+              count={sideCount}
+              //@ts-ignore
+              values={params.corners}
+              initialValues={Array.from({ length: sideCount }, (_, i) =>
+                String.fromCharCode(65 + i)
+              )}
+              labels={({ i }) => `corner ${i + 1}`}
+              onChange={(corners) => onParamsChange({ ...params, corners })}
+            />
             <SideEditor
               title="sides"
-              count={countSides(params.points)}
+              count={sideCount}
               values={params.sides}
               labels={({ i }) => `side ${i + 1}`}
               placeHolders={calculateSideLabels(params.points)}
@@ -170,6 +174,17 @@ function useFlashOverlayAnimation() {
 }
 
 type CuboidProps = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
+type PolygonProps = z.infer<(typeof polygonDrawPrompt)["parameters"]>;
+
+type LabelEditorProps = {
+  count: number;
+  values: CuboidProps["sides"] | CuboidProps["corners"];
+  title: string;
+  onChange: (values: any) => void;
+  placeHolders?: string[];
+  labels: ({ i }: { i: number }) => string;
+  initialValues?: CuboidProps["sides"] | CuboidProps["corners"];
+};
 
 function SideEditor({
   count,
@@ -178,38 +193,32 @@ function SideEditor({
   onChange,
   placeHolders,
   labels,
-}: {
-  count: number;
-  values: CuboidProps["sides"];
-  title: string;
-  onChange: (values: CuboidProps["sides"]) => void;
-  placeHolders: string[];
-  labels: ({ i }: { i: number }) => string;
-}) {
+  initialValues,
+}: LabelEditorProps) {
   const cornersEnabled = Array.isArray(values);
   const inputCount = Math.max(count, values?.length ?? 0);
   const [sideValues, setSideValues] = useState<
     { enabled: boolean; value: boolean | string }[]
   >(
-    Array.from({ length: inputCount }, () => ({
+    Array.from({ length: inputCount }, (_, i) => ({
       enabled: true,
-      value: true,
+      value: initialValues?.[i] ?? true,
     }))
   );
 
-  function getValues(newState?: typeof sideValues): CuboidProps["sides"] {
+  function getValues(newState: typeof sideValues) {
     const _values = newState ?? sideValues;
     return _values.flatMap(({ enabled, value }) => {
-      if (!enabled) return false;
+      if (!enabled) return title === "corners" ? null : false;
       return typeof value === "string" ? value : true;
-    });
+    }) as CuboidProps["sides"] | PolygonProps["corners"];
   }
 
   return (
     <PopoverEditor
       title={title}
       enabled={cornersEnabled}
-      className="gap-0 w-60"
+      className="gap-0"
       onClick={() =>
         !cornersEnabled &&
         onChange(
@@ -257,9 +266,12 @@ function SideEditor({
                 setSideValues((values) => {
                   const newState = values.map((prev, _i) => {
                     if (_i === i) {
+                      const value = Boolean(e.target.value)
+                        ? e.target.value
+                        : false;
                       return {
                         ...prev,
-                        value: e.target.value,
+                        value,
                       };
                     }
                     return prev;
