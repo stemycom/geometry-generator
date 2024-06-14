@@ -37,7 +37,6 @@ export function Polygon({ onPointsChage, ...props }: PolygonProps) {
         xmlnsXlink="http://www.w3.org/1999/xlink"
       >
         <polygon
-          className="stroke fill-slate-400/10 stroke-slate-400"
           style={{
             strokeWidth: 1,
             fill: "#94a3b822",
@@ -396,7 +395,7 @@ function AngleArcs({
           <text
             x={labelX}
             y={labelY}
-            className="text-xs fill-slate-600 dark:fill-slate-200 uppercase font-bold tracking-tighter select-none"
+            // className="text-xs fill-slate-600 dark:fill-slate-200 uppercase font-bold tracking-tighter select-none"
             style={{
               fill: "#475569",
               fontSize: ".75rem",
