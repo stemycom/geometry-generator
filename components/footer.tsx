@@ -18,7 +18,7 @@ export function FooterText({ className, ...props }: React.ComponentProps<"p">) {
       <Button asChild size="sm" variant="ghost">
         <a
           target="_blank"
-          href="https://github.com/vercel-labs/gemini-chatbot"
+          href="https://github.com/mikkmartin/geometry-generator"
           rel="noopener noreferrer"
         >
           <IconGitHub />
