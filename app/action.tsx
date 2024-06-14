@@ -14,6 +14,7 @@ import {
 import { Polygon } from "@/components/polygon";
 import { polygonDrawPrompt, cuboidDrawPrompt } from "./ai-function-prompts";
 import { Cuboid } from "@/components/cuboid";
+import { CuboidEditor, PolygonEditor } from "@/components/geometry/editors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
@@ -135,12 +136,7 @@ Messages inside [] means that it's a UI element or a user event. For example:
   });
 
   completion.onFunctionCall("draw_shape", async (props) => {
-    reply.done(
-      <div className="flex">
-        <Polygon {...props} />
-        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
-      </div>
-    );
+    reply.done(<PolygonEditor {...props} />);
 
     aiState.done([
       ...aiState.get(),
@@ -153,12 +149,7 @@ Messages inside [] means that it's a UI element or a user event. For example:
   });
 
   completion.onFunctionCall("draw_cuboid", async (props) => {
-    reply.done(
-      <div className="flex">
-        <Cuboid {...props} />
-        <pre className="text-sm">{JSON.stringify(props, null, 2)}</pre>
-      </div>
-    );
+    reply.done(<CuboidEditor {...props} />);
 
     aiState.done([
       ...aiState.get(),

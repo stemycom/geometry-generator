@@ -11,11 +11,13 @@ import { useAIState } from "ai/rsc";
 import { polygonDrawPrompt } from "@/app/ai-function-prompts";
 import { spring } from "@/lib/utils";
 
-export type PolygonProps = z.infer<(typeof polygonDrawPrompt)["parameters"]> & {
+export type PolygonProps = z.infer<(typeof polygonDrawPrompt)["parameters"]>;
+
+type Props = PolygonProps & {
   onPointsChage?: (points: string) => void;
 };
 
-export function Polygon({ onPointsChage, ...props }: PolygonProps) {
+export function Polygon({ onPointsChage, ...props }: Props) {
   const [points, setPoints] = useState(() => pathToPoints(props.points));
 
   const path = pointsToPath(points);

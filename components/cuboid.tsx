@@ -29,8 +29,8 @@ interface CameraState {
   rotation?: number[];
   zoom?: number;
 }
-type CuboidInput = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
-type Props = CuboidInput &
+export type CuboidProps = z.infer<(typeof cuboidDrawPrompt)["parameters"]>;
+type Props = CuboidProps &
   CameraState & {
     className?: string;
     onCameraChange?: (cam: CameraState) => void;
